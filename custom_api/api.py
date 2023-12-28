@@ -485,7 +485,7 @@ def get_logged_user():
 
 def project_on_create(doc, method):
     user_emails = [user.email for user in doc.users]
-    attachment = None
+    attachment = {}
     if doc.doctype == "Project":
         if doc.owner != doc.project_manager and doc.project_manager not in user_emails:
             user_emails.append(doc.project_manager)
@@ -496,7 +496,7 @@ def project_on_create(doc, method):
     frappe.db.commit()
 
     if doc.doctype == "Task":
-        if doc.exp_start_date != None:
+        if doc.exp_start_date != None and doc.exp_start_date != "":
             dtstamp = datetime.now().strftime('%Y%m%dT%H%M%S')
             task_start = datetime.strptime(doc.exp_start_date + " 8", "%Y-%m-%d %H")
             task_start = task_start.strftime('%Y%m%dT%H%M%S')
@@ -520,9 +520,12 @@ def project_on_create(doc, method):
             """
             attachment = {'fname':'invite.ics', 'fcontent':ical_data}
     #notify
-    send_notification("New " + doc.doctype + " " + doc.name, json.dumps(user_emails), doctype = doc.doctype,doc_name = doc.name, notification_type="Assignment")
-    send_email(json.dumps(user_emails),f"New {doc.doctype} - {doc.subject}", f"You have been assigned a new {doc.doctype} - <a href='{frappe.utils.get_url()}/{doc.doctype}/{doc.name}' target='_blank'> {doc.name} </a><p>{doc.description}</p>", attachments = [attachment])
-    #create folder
+    send_notification("New " + doc.doctype + " " + doc.name, json.dumps(user_emails), notification_type="Assignment", doctype = doc.doctype,doc_name = doc.name)
+    if doc.doctype == "Task":
+        send_email(json.dumps(user_emails),f"New {doc.doctype} - {doc.subject}", f"You have been assigned a new {doc.doctype} - <a href='{frappe.utils.get_url()}/{doc.doctype}/{doc.name}' target='_blank'> {doc.name} </a><p>{doc.description}</p>", attachments = [attachment])
+    if doc.doctype == "Project":
+        send_email(json.dumps(user_emails),f"New {doc.doctype} - {doc.project_name}", f"You have been assigned a new {doc.doctype} - <a href='{frappe.utils.get_url()}/{doc.doctype}/{doc.name}' target='_blank'> {doc.name} </a><p>{doc.project_description}</p>")             
+#create folder
     create_folder = frappe.get_attr("frappe.core.api.file.create_new_folder")
     create_folder(doc.name, "Home/Attachments")
     frappe.db.commit()
@@ -532,7 +535,7 @@ def project_on_update(doc, method):
     get_users = frappe.get_attr("frappe.share.get_users")
     old_value = [old_user.user for old_user in get_users(doc.doctype, doc.name)]
     new_value = [new_user.email for new_user in doc.users]
-    attachment = None
+    attachment = {}
     if(doc.doctype == "Project"):
         new_value.append(doc.project_manager)
     added_users = list(set(new_value) - set(old_value))
@@ -544,7 +547,7 @@ def project_on_update(doc, method):
             new_users.append(user)
             share_doc(doc.doctype, doc.name, user, read = 1, write = 1, share = 1)
             if doc.doctype == "Task":
-                if doc.exp_start_date != None:
+                if doc.exp_start_date != None and doc.exp_start_date != "":
                     dtstamp = datetime.now().strftime('%Y%m%dT%H%M%S')
                     task_start = datetime.strptime(doc.exp_start_date + " 8", "%Y-%m-%d %H")
                     task_start = task_start.strftime('%Y%m%dT%H%M%S')
@@ -567,8 +570,11 @@ def project_on_update(doc, method):
                     END:VCALENDAR
                     """
                     attachment = {'fname':'invite.ics', 'fcontent':ical_data}
-        send_notification("New " + doc.doctype + " " + doc.name, json.dumps(new_users), doctype = doc.doctype,doc_name = doc.name, notification_type="Assignment")
-        send_email(json.dumps(new_users),f"New {doc.doctype} - {doc.subject}", f"You have been assigned a new {doc.doctype} - <a href='{frappe.utils.get_url()}/{doc.doctype}/{doc.name}' target='_blank'> {doc.name} </a><p>{doc.description}</p>", attachments = [attachment])
+        send_notification("New " + doc.doctype + " " + doc.name, json.dumps(new_users), doctype = doc.doctype,doc_name = doc.name,notification_type="Assignment")
+        if doc.doctype == "Task":
+            send_email(json.dumps(new_users),f"New {doc.doctype} - {doc.subject}", f"You have been assigned a new {doc.doctype} - <a href='{frappe.utils.get_url()}/{doc.doctype}/{doc.name}' target='_blank'> {doc.name} </a><p>{doc.description}</p>", attachments = [attachment])
+        if doc.doctype == "Project":
+            send_email(json.dumps(new_users),f"New {doc.doctype} - {doc.project_name}", f"You have been assigned a new {doc.doctype} - <a href='{frappe.utils.get_url()}/{doc.doctype}/{doc.name}' target='_blank'> {doc.name} </a><p>{doc.project_description}</p>", attachments = [attachment])             
     set_doc_permission = frappe.get_attr("frappe.share.set_permission")
     if removed_users:
         for user in removed_users:
