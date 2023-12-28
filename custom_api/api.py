@@ -520,7 +520,7 @@ def project_on_create(doc, method):
             """
             attachment = {'fname':'invite.ics', 'fcontent':ical_data}
     #notify
-    send_notification("New " + doc.doctype + " " + doc.name, json.dumps(user_emails), doctype = doc.doctype,doc_name = doc.name)
+    send_notification("New " + doc.doctype + " " + doc.name, json.dumps(user_emails), doctype = doc.doctype,doc_name = doc.name, notification_type="Assignment")
     send_email(json.dumps(user_emails),f"New {doc.doctype} - {doc.subject}", f"You have been assigned a new {doc.doctype} - <a href='{frappe.utils.get_url()}/{doc.doctype}/{doc.name}' target='_blank'> {doc.name} </a><p>{doc.description}</p>", attachments = [attachment])
     #create folder
     create_folder = frappe.get_attr("frappe.core.api.file.create_new_folder")
@@ -567,7 +567,7 @@ def project_on_update(doc, method):
                     END:VCALENDAR
                     """
                     attachment = {'fname':'invite.ics', 'fcontent':ical_data}
-        send_notification("New " + doc.doctype + " " + doc.name, json.dumps(new_users), doctype = doc.doctype,doc_name = doc.name)
+        send_notification("New " + doc.doctype + " " + doc.name, json.dumps(new_users), doctype = doc.doctype,doc_name = doc.name, notification_type="Assignment")
         send_email(json.dumps(new_users),f"New {doc.doctype} - {doc.subject}", f"You have been assigned a new {doc.doctype} - <a href='{frappe.utils.get_url()}/{doc.doctype}/{doc.name}' target='_blank'> {doc.name} </a><p>{doc.description}</p>", attachments = [attachment])
     set_doc_permission = frappe.get_attr("frappe.share.set_permission")
     if removed_users:
