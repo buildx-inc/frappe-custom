@@ -13,6 +13,7 @@ def execute():
     doctype_doctype.save(ignore_permissions=True)
 
     docfield_doctype = frappe.get_doc("DocType","DocField")
+    
     docfield_fields = [
         {'fieldname': 'alias', 'label': 'Alias', 'fieldtype': 'Data', 'options': None, 'reqd': 0},
         {'fieldname': 'buildx_depends_on', 'label': 'Buildx Depends On', 'fieldtype': 'Data', 'options': None, 'reqd': 0},
@@ -25,6 +26,7 @@ def execute():
         {'fieldname': 'enable_actions', 'label': 'Enable Actions', 'fieldtype': 'Check', 'options': None, 'reqd': 0},
         {'fieldname': 'filters', 'label': 'Filters', 'fieldtype': 'JSON', 'options': None, 'reqd': 0},
         {'fieldname': 'in_compact_list', 'label': 'In Compact List', 'fieldtype': 'Check', 'options': None, 'reqd': 0},
+        {'fieldname': 'in_view', 'label': 'In View', 'fieldtype': 'Check', 'options': None, 'reqd': 0},
         {'fieldname': 'in_edit', 'label': 'In Edit', 'fieldtype': 'Check', 'options': None, 'reqd': 0},
         {'fieldname': 'in_list_compact', 'label': 'In List Compact', 'fieldtype': 'Check', 'options': None, 'reqd': 0},
         {'fieldname': 'kanban_category', 'label': 'Kanban Category', 'fieldtype': 'Check', 'options': None, 'reqd': 0},
@@ -35,6 +37,7 @@ def execute():
         {'fieldname': 'multiselect_key', 'label': 'Multiselect Key', 'fieldtype': 'Data', 'options': None, 'reqd': 0},
         {'fieldname': 'validation', 'label': 'valid', 'fieldtype': 'JSON', 'options': None, 'reqd': 0},
     ]
+    
     for field in docfield_fields:
         if field['fieldname'] not in [d.fieldname for d in docfield_doctype.fields]:
             docfield_doctype.append("fields",field)
