@@ -19,6 +19,7 @@ def execute():
     docfield_doctype.append("fields",{'fieldname': 'filters', 'label': 'Filters', 'fieldtype': 'JSON', 'options': None, 'reqd': 0})
     docfield_doctype.append("fields",{'fieldname': 'in_compact_list', 'label': 'In Compact List', 'fieldtype': 'Check', 'options': None, 'reqd': 0})
     docfield_doctype.append("fields",{'fieldname': 'in_edit', 'label': 'In Edit', 'fieldtype': 'Check', 'options': None, 'reqd': 0})
+    docfield_doctype.append("fields",{'fieldname': 'in_view', 'label': 'In View', 'fieldtype': 'Check', 'options': None, 'reqd': 0})
     docfield_doctype.append("fields",{'fieldname': 'in_list_compact', 'label': 'In List Compact', 'fieldtype': 'Check', 'options': None, 'reqd': 0})
     docfield_doctype.append("fields",{'fieldname': 'kanban_category', 'label': 'Kanban Category', 'fieldtype': 'Check', 'options': None, 'reqd': 0})
     docfield_doctype.append("fields",{'fieldname': 'kanban_date', 'label': 'Kanban Date', 'fieldtype': 'Check', 'options': None, 'reqd': 0})
