@@ -5,6 +5,7 @@ def execute():
     doctype_fields = [
         {'fieldname': 'alias', 'label': 'Alias', 'fieldtype': 'Data', 'options': None, 'reqd': 0},
         {'fieldname': 'enable_drive', 'label': 'Enable Drive', 'fieldtype': 'Check', 'options': None, 'reqd': 0},
+        {'fieldname': 'allow_email', 'label': 'Allow Email', 'fieldtype': 'Check', 'options': None, 'reqd': 0},
         {'fieldname': 'has_kanban', 'label': 'Has Kanban', 'fieldtype': 'Check', 'options': None, 'reqd': 0}]
     for field in doctype_fields:
         if field['fieldname'] not in [d.fieldname for d in doctype_doctype.fields]:
@@ -17,6 +18,9 @@ def execute():
     docfield_fields = [
         {'fieldname': 'alias', 'label': 'Alias', 'fieldtype': 'Data', 'options': None, 'reqd': 0},
         {'fieldname': 'buildx_depends_on', 'label': 'Buildx Depends On', 'fieldtype': 'Data', 'options': None, 'reqd': 0},
+        {'fieldname': 'external_link', 'label': 'External Link', 'fieldtype': 'Check', 'options': None, 'reqd': 0},
+        {'fieldname': 'select_label', 'label': 'Select Label', 'fieldtype': 'Data', 'options': None, 'reqd': 0},
+        {'fieldname': 'option_label', 'label': 'Option Label', 'fieldtype': 'Data', 'options': None, 'reqd': 0},
         {'fieldname': 'calendar_color', 'label': 'Calendar Color', 'fieldtype': 'Check', 'options': None, 'reqd': 0},
         {'fieldname': 'calendar_description', 'label': 'Calendar Description', 'fieldtype': 'Check', 'options': None, 'reqd': 0},
         {'fieldname': 'calendar_end_date', 'label': 'Calendar End Date', 'fieldtype': 'Check', 'options': None, 'reqd': 0},
@@ -34,6 +38,10 @@ def execute():
         {'fieldname': 'kanban_description', 'label': 'Kanban Description', 'fieldtype': 'Check', 'options': None, 'reqd': 0},
         {'fieldname': 'kanban_group', 'label': 'Kanban Group', 'fieldtype': 'Check', 'options': None, 'reqd': 0},
         {'fieldname': 'kanban_title', 'label': 'Kanban Title', 'fieldtype': 'Check', 'options': None, 'reqd': 0},
+        {'fieldname': 'kanban_user', 'label': 'Kanban User', 'fieldtype': 'Check', 'options': None, 'reqd': 0},
+        {'fieldname': 'kanban_tags', 'label': 'Kanban Tags', 'fieldtype': 'Check', 'options': None, 'reqd': 0},
+        {'fieldname': 'multiselect', 'label': 'Multiselect', 'fieldtype': 'Data', 'options': None, 'reqd': 0},
+        {'fieldname': 'multiselect_id', 'label': 'Multiselect Id', 'fieldtype': 'Data', 'options': None, 'reqd': 0},
         {'fieldname': 'multiselect_key', 'label': 'Multiselect Key', 'fieldtype': 'Data', 'options': None, 'reqd': 0},
         {'fieldname': 'validation', 'label': 'valid', 'fieldtype': 'JSON', 'options': None, 'reqd': 0},
     ]
