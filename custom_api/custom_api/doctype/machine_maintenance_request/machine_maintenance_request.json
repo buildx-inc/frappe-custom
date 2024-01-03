@@ -1,0 +1,158 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2023-12-08 21:21:44.562928",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "enable_drive": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "subject",
+  "description",
+  "machine",
+  "is_periodic",
+  "assignee_notes",
+  "maintenance_manager_notes",
+  "attachments",
+  "naming_series",
+  "amended_from",
+  "maintenance_assignee",
+  "notes_visible",
+  "urgent",
+  "seen"
+ ],
+ "fields": [
+  {
+   "fieldname": "subject",
+   "fieldtype": "Data",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Subject"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text Editor",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Description"
+  },
+  {
+   "fieldname": "machine",
+   "fieldtype": "Link",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_view": 1,
+   "label": "Machine",
+   "options": "Machine"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_periodic",
+   "fieldtype": "Check",
+   "label": "Is Periodic"
+  },
+  {
+   "allow_on_submit": 1,
+   "buildx_depends_on": "(!formData.workflow_state || [\"Claim\", \"Pending Claim\"].includes(formData.workflow_state))",
+   "fieldname": "assignee_notes",
+   "fieldtype": "Text Editor",
+   "in_edit": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Assignee Notes"
+  },
+  {
+   "allow_on_submit": 1,
+   "buildx_depends_on": "(!formData.workflow_state || [\"Maintenance Request\",\"Claim\", \"Pending Claim\"].includes(formData.workflow_state))",
+   "fieldname": "maintenance_manager_notes",
+   "fieldtype": "Text Editor",
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Maintenance manager notes"
+  },
+  {
+   "fieldname": "attachments",
+   "fieldtype": "Attach",
+   "in_edit": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Attachments"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Data",
+   "label": "Naming Series",
+   "options": "M-Req-.YYYY.-"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Machine Maintenance Request",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fetch_from": "machine.maintenance_assignee",
+   "fieldname": "maintenance_assignee",
+   "fieldtype": "Read Only",
+   "in_list_view": 1,
+   "label": "Maintenance Assignee"
+  },
+  {
+   "default": "0",
+   "fieldname": "notes_visible",
+   "fieldtype": "Check",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Notes visible"
+  },
+  {
+   "default": "0",
+   "fieldname": "urgent",
+   "fieldtype": "Check",
+   "label": "Urgent"
+  },
+  {
+   "default": "0",
+   "fieldname": "seen",
+   "fieldtype": "Check",
+   "label": "Seen"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2024-01-03 15:50:45.242827",
+ "modified_by": "Administrator",
+ "module": "Custom Api",
+ "name": "Machine Maintenance Request",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,0 +1,45 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2023-12-08 21:00:14.335151",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "description",
+  "value",
+  "units"
+ ],
+ "fields": [
+  {
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "label": "Description"
+  },
+  {
+   "fieldname": "value",
+   "fieldtype": "Data",
+   "label": "Value",
+   "options": "unit_value"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "units",
+   "fieldtype": "Link",
+   "label": "Units",
+   "options": "Measurable unit"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-01-03 15:50:11.654053",
+ "modified_by": "Administrator",
+ "module": "Custom Api",
+ "name": "Ancillaries",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
