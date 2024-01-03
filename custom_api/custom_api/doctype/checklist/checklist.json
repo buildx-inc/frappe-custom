@@ -1,0 +1,45 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2023-12-10 15:03:34.013681",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item",
+  "waiting_time",
+  "waiting_time_unit"
+ ],
+ "fields": [
+  {
+   "fieldname": "item",
+   "fieldtype": "Data",
+   "label": "Item"
+  },
+  {
+   "fieldname": "waiting_time",
+   "fieldtype": "Float",
+   "label": "Waiting Time",
+   "options": "Period"
+  },
+  {
+   "default": "Minutes",
+   "fieldname": "waiting_time_unit",
+   "fieldtype": "Select",
+   "label": "Waiting Time Unit",
+   "options": "Seconds\nMinutes\nHours\nDays\nWeeks"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-01-03 16:16:47.145773",
+ "modified_by": "Administrator",
+ "module": "Custom Api",
+ "name": "Checklist",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
