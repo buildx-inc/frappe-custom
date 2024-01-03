@@ -37,6 +37,7 @@
   {
    "fieldname": "contact_name",
    "fieldtype": "Data",
+   "in_edit": 1,
    "label": "Authorized Contact full name"
   },
   {
@@ -87,7 +88,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-03 12:02:00.998292",
+ "modified": "2024-01-03 15:40:02.225771",
  "modified_by": "Administrator",
  "module": "Custom Api",
  "name": "Donor Organization",
