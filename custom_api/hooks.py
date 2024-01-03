@@ -10,7 +10,7 @@ app_license = "MIT"
 scheduler_events = {
     "daily": [
         "custom_api.task.task.daily_notifications"
-    ],
+    ]
 }
 
 doc_events = {

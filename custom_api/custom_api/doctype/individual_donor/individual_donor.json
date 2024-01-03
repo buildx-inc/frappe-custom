@@ -1,0 +1,116 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-01-02 22:08:02.428636",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "first_name",
+  "last_name",
+  "country_of_nationality",
+  "emaill_address",
+  "mobile_number",
+  "amount",
+  "share_name",
+  "subscribe"
+ ],
+ "fields": [
+  {
+   "fieldname": "first_name",
+   "fieldtype": "Data",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "label": "First Name"
+  },
+  {
+   "fieldname": "last_name",
+   "fieldtype": "Data",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "label": "Last Name"
+  },
+  {
+   "fieldname": "country_of_nationality",
+   "fieldtype": "Link",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "label": "Country of Nationality",
+   "options": "Country"
+  },
+  {
+   "fieldname": "emaill_address",
+   "fieldtype": "Data",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "label": "Emaill address",
+   "options": "email"
+  },
+  {
+   "fieldname": "mobile_number",
+   "fieldtype": "Data",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "label": "Mobile Number"
+  },
+  {
+   "description": "to provide for Palestinian tech talent and startups? (in USD):",
+   "fieldname": "amount",
+   "fieldtype": "Float",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "label": "Financial support"
+  },
+  {
+   "default": "0",
+   "description": "Do you give consent to share your name\nalongside your country and financial\ncontribution on the RISE program website as\na supporter of War on Gaza Emergency\nIntervention?",
+   "fieldname": "share_name",
+   "fieldtype": "Check",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "label": "Supporter"
+  },
+  {
+   "default": "0",
+   "description": "Do you want to be updated on the RISE program impact progress by email?",
+   "fieldname": "subscribe",
+   "fieldtype": "Check",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "label": "Subscribe"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-01-02 22:34:55.824457",
+ "modified_by": "Administrator",
+ "module": "Custom Api",
+ "name": "Individual Donor",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
