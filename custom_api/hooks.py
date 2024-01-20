@@ -2,11 +2,36 @@ from . import __version__ as app_version
 
 app_name = "custom_api"
 app_title = "Custom Api"
-app_publisher = "BuildX"
-app_description = "custom API from POS-admin"
-app_email = "mohannad@buildx.ps"
+app_publisher = "max"
+app_description = "Custom apis for restaurant app"
+app_email = "m@m.c"
 app_license = "MIT"
 
+scheduler_events = {
+    "daily": [
+        "custom_api.task.task.daily_notifications"
+    ]
+}
+
+doc_events = {
+    "Project": {
+        "after_insert": ["custom_api.api.project_on_create"],
+        "on_update" : "custom_api.api.project_on_update"
+    },
+    "Task": {
+        "after_insert": ["custom_api.api.project_on_create"],
+        "on_update" : "custom_api.api.project_on_update"
+    },
+    "Individual Donor": {
+        "after_insert": "custom_api.donor.donor.donor_application_after_insert"
+    },
+    "Donor Organization": {
+        "after_insert": "custom_api.donor.donor.donor_application_after_insert"
+    },
+    "Email Queue": {
+        "on_update": "custom_api.donor.donor.email_status_check"
+    }
+}
 # Includes in <head>
 # ------------------
 

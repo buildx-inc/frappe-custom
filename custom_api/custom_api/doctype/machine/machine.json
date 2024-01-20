@@ -1,0 +1,134 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2023-12-08 21:03:30.692294",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "name1",
+  "description",
+  "maintenance_assignee",
+  "maintenance_assignees",
+  "workers",
+  "productivity",
+  "electrical_requirements",
+  "ancillaries",
+  "naming_series",
+  "maintenance_task_list"
+ ],
+ "fields": [
+  {
+   "fieldname": "name1",
+   "fieldtype": "Data",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Name"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text Editor",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Description"
+  },
+  {
+   "fieldname": "maintenance_assignee",
+   "fieldtype": "Link",
+   "label": "Maintenance Assignee",
+   "options": "User"
+  },
+  {
+   "fieldname": "maintenance_assignees",
+   "fieldtype": "Table",
+   "in_edit": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Maintenance Assignees",
+   "multiselect": "User",
+   "multiselect_id": "full_name",
+   "multiselect_key": "user",
+   "options": "User List"
+  },
+  {
+   "fieldname": "workers",
+   "fieldtype": "Table",
+   "in_edit": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Workers",
+   "multiselect": "User",
+   "multiselect_id": "full_name",
+   "multiselect_key": "user",
+   "options": "User List"
+  },
+  {
+   "fieldname": "productivity",
+   "fieldtype": "Table",
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Productivity",
+   "options": "Measurable unit List"
+  },
+  {
+   "fieldname": "electrical_requirements",
+   "fieldtype": "Table",
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Electrical Requirements",
+   "options": "Measurable unit List"
+  },
+  {
+   "fieldname": "ancillaries",
+   "fieldtype": "Table",
+   "in_edit": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Ancillaries",
+   "options": "Ancillaries"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Data",
+   "label": "Naming Series",
+   "options": "Machine-"
+  },
+  {
+   "fieldname": "maintenance_task_list",
+   "fieldtype": "Table",
+   "label": "Maintenance Task List",
+   "options": "Maintenance Task List"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-01-03 16:16:14.347056",
+ "modified_by": "Administrator",
+ "module": "Custom Api",
+ "name": "Machine",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

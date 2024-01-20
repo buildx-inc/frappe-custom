@@ -1,0 +1,122 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:full_name",
+ "creation": "2024-01-04 16:34:13.697665",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "full_name",
+  "title",
+  "workload",
+  "id_type",
+  "id_number",
+  "date_of_birth",
+  "mobile_number",
+  "email"
+ ],
+ "fields": [
+  {
+   "fieldname": "full_name",
+   "fieldtype": "Data",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_view": 1,
+   "label": "Full Name",
+   "unique": 1,
+   "validation": "{\n    \"reqd\":1\n}"
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_view": 1,
+   "label": "Title"
+  },
+  {
+   "default": "Full-time",
+   "fieldname": "workload",
+   "fieldtype": "Select",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_view": 1,
+   "label": "Workload",
+   "options": "Full-time\nPart-time\nOther\u2026"
+  },
+  {
+   "default": "Palestinian ID (primarily)",
+   "fieldname": "id_type",
+   "fieldtype": "Select",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_view": 1,
+   "label": "ID Type",
+   "options": "Palestinian ID (primarily)\nPassport (must be valid)\nOther \u2026",
+   "reqd": 1
+  },
+  {
+   "fieldname": "id_number",
+   "fieldtype": "Data",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_view": 1,
+   "label": "ID Number",
+   "reqd": 1
+  },
+  {
+   "fieldname": "date_of_birth",
+   "fieldtype": "Date",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_view": 1,
+   "label": "Date of Birth",
+   "reqd": 1
+  },
+  {
+   "fieldname": "mobile_number",
+   "fieldtype": "Data",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_view": 1,
+   "label": "Mobile Number ",
+   "options": "mobile"
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_view": 1,
+   "label": "Email",
+   "options": "email"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-01-10 10:14:02.373371",
+ "modified_by": "Administrator",
+ "module": "Custom Api",
+ "name": "Startup Contact",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

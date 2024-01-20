@@ -1,0 +1,39 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-01-04 17:47:09.552425",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "grant_provider",
+  "provider"
+ ],
+ "fields": [
+  {
+   "fieldname": "provider",
+   "fieldtype": "Data",
+   "label": "Grants Provider"
+  },
+  {
+   "fieldname": "grant_provider",
+   "fieldtype": "Link",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Grants Provider",
+   "options": "Grants Provider"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-01-11 18:17:12.531982",
+ "modified_by": "Administrator",
+ "module": "Custom Api",
+ "name": "Grants Provider List",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

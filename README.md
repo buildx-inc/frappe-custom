@@ -1,6 +1,6 @@
 ## Custom Api
 
-custom API from POS-admin
+Custom apis for restaurant app
 
 #### License
 

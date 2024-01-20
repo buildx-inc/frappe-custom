@@ -9,9 +9,9 @@ from custom_api import __version__ as version
 setup(
 	name="custom_api",
 	version=version,
-	description="custom API from POS-admin",
-	author="BuildX",
-	author_email="mohannad@buildx.ps",
+	description="Custom apis for restaurant app",
+	author="max",
+	author_email="m@m.c",
 	packages=find_packages(),
 	zip_safe=False,
 	include_package_data=True,
