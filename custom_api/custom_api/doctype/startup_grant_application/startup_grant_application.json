@@ -58,7 +58,9 @@
   "pitch_deck",
   "financial_projections",
   "amended_from",
-  "is_submitted"
+  "is_submitted",
+  "approved_by",
+  "rejected_by"
  ],
  "fields": [
   {
@@ -541,12 +543,24 @@
    "fieldtype": "Check",
    "in_standard_filter": 1,
    "label": "Is Submitted"
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Table",
+   "label": "Approved By",
+   "options": "User List"
+  },
+  {
+   "fieldname": "rejected_by",
+   "fieldtype": "Table",
+   "label": "Rejected By",
+   "options": "User List"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-01-19 19:57:10.365101",
+ "modified": "2024-01-20 19:09:06.653273",
  "modified_by": "Administrator",
  "module": "Custom Api",
  "name": "Startup Grant Application",
