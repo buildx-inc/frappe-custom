@@ -76,9 +76,17 @@ def execute():
         {'doctype':'DocField','fieldname': 'role_profile_name', 'label': 'Role Profile', 'fieldtype': 'Link', 'options': 'Role Profile', 'reqd': 0, 'idx': 17},
         {'doctype':'DocField','fieldname': 'status', 'label': 'Status', 'fieldtype': 'Select', 'options': 'Active\nCancelled', 'reqd': 0, 'idx': 5}
     ]
+    
+    
+    current_fields = []
+
+    for user_field in user_doctype.fields:
+        current_fields.append(user_field.fieldname)
+
     for field in user_fields:
-        if field['fieldname'] not in [d.fieldname for d in user_doctype.fields]:
-            user_doctype.fields.insert(field['idx'],field)
+        if field['fieldname'] not in current_fields:
+            field_doc = frappe.get_doc(field)
+            user_doctype.fields.insert(field['idx'],field_doc)
 
     user_doctype.save(ignore_permissions=True)
 
@@ -135,3 +143,21 @@ def execute():
     task_doctype.save(ignore_permissions=True)
 
     frappe.flags.developer_mode = 0
+
+doctype = "Workflow Action"
+list = frappe.get_list(doctype)
+item_list = []
+for item in list:
+    itemData = {}
+    doc = frappe.get_doc(doctype,item['name'])
+    itemData['doctype'] = doctype
+    itemData['name'] = doc.name
+    itemData['workflow_state_name'] = doc.workflow_state_name
+    itemData['icon'] = doc.icon
+    itemData['style'] = doc.style
+    item_list.append(itemData)
+print(item_list)
+
+
+workflow_action_master = [{'name': 'Email Error', 'workflow_action_name': 'Email Error', 'doctype': 'Workflow Action Master'}, {'name': 'Send Receipt', 'workflow_action_name': 'Send Receipt', 'doctype': 'Workflow Action Master'}, {'name': 'Delete', 'workflow_action_name': 'Delete', 'doctype': 'Workflow Action Master'}, {'name': 'Accept', 'workflow_action_name': 'Accept', 'doctype': 'Workflow Action Master'}, {'name': 'Submit', 'workflow_action_name': 'Submit', 'doctype': 'Workflow Action Master'}, {'name': 'Review', 'workflow_action_name': 'Review', 'doctype': 'Workflow Action Master'}, {'name': 'Reject', 'workflow_action_name': 'Reject', 'doctype': 'Workflow Action Master'}, {'name': 'Approve', 'workflow_action_name': 'Approve', 'doctype': 'Workflow Action Master'}]
+workflow_state = [{'doctype': 'Workflow State', 'name': 'Pending', 'workflow_state_name': 'Pending', 'icon': 'question-sign', 'style': ''}, {'doctype': 'Workflow State', 'name': 'Approved', 'workflow_state_name': 'Approved', 'icon': 'ok-sign', 'style': 'Success'}, {'doctype': 'Workflow State', 'name': 'Rejected', 'workflow_state_name': 'Rejected', 'icon': 'remove', 'style': 'Danger'}, {'doctype': 'Workflow State', 'name': 'Draft', 'workflow_state_name': 'Draft', 'icon': '', 'style': ''}, {'doctype': 'Workflow State', 'name': 'To Financial Committee', 'workflow_state_name': 'To Financial Committee', 'icon': '', 'style': ''}, {'doctype': 'Workflow State', 'name': 'Financial Committee Review', 'workflow_state_name': 'Financial Committee Review', 'icon': '', 'style': ''}, {'doctype': 'Workflow State', 'name': 'Selection Committee Review', 'workflow_state_name': 'Selection Committee Review', 'icon': '', 'style': ''}, {'doctype': 'Workflow State', 'name': 'Admin Review', 'workflow_state_name': 'Admin Review', 'icon': '', 'style': ''}, {'doctype': 'Workflow State', 'name': 'Submitted', 'workflow_state_name': 'Submitted', 'icon': '', 'style': ''}, {'doctype': 'Workflow State', 'name': 'Financial Committee Rejected', 'workflow_state_name': 'Financial Committee Rejected', 'icon': '', 'style': ''}, {'doctype': 'Workflow State', 'name': 'Selection Committee Rejected', 'workflow_state_name': 'Selection Committee Rejected', 'icon': '', 'style': ''}, {'doctype': 'Workflow State', 'name': 'Deleted', 'workflow_state_name': 'Deleted', 'icon': '', 'style': ''}, {'doctype': 'Workflow State', 'name': 'Receipt Received', 'workflow_state_name': 'Receipt Received', 'icon': '', 'style': ''}, {'doctype': 'Workflow State', 'name': 'Receipt Email Error', 'workflow_state_name': 'Receipt Email Error', 'icon': '', 'style': ''}, {'doctype': 'Workflow State', 'name': 'Email Error', 'workflow_state_name': 'Email Error', 'icon': '', 'style': ''}]
