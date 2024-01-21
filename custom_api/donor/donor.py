@@ -1,3 +1,5 @@
+import frappe
+
 def donor_application_after_insert(doc, method):
     doc.docstatus = 1
     doc.save(ignore_permissions=True)
