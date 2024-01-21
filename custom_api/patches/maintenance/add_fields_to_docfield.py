@@ -144,7 +144,7 @@ def execute():
 
     frappe.flags.developer_mode = 0
 
-doctype = "Workflow Action"
+doctype = "Notification"
 list = frappe.get_list(doctype)
 item_list = []
 for item in list:
@@ -152,12 +152,24 @@ for item in list:
     doc = frappe.get_doc(doctype,item['name'])
     itemData['doctype'] = doctype
     itemData['name'] = doc.name
-    itemData['workflow_state_name'] = doc.workflow_state_name
-    itemData['icon'] = doc.icon
-    itemData['style'] = doc.style
+    itemData['enabled'] = doc.enabled
+    itemData['channel'] = doc.channel
+    itemData['subject'] = doc.subject
+    itemData['document_type'] = doc.document_type
+    itemData['is_standard'] = doc.is_standard
+    itemData['module'] = doc.module
+    itemData['event'] = doc.event
+    itemData['method'] = doc.method
+    itemData['date_changed'] = doc.date_changed
+    itemData['days_in_advance'] = doc.days_in_advance
+    itemData['value_changed'] = doc.value_changed
+    itemData['send_system_notification'] = doc.send_system_notification
+    itemData['condition'] = doc.condition
+    itemData['set_property_after_alert'] = doc.set_property_after_alert
+    itemData['property_value'] = doc.property_value
+    itemData['send_to_all_assignees'] = doc.send_to_all_assignees
+    itemData['message'] = doc.message
+    itemData['attach_print'] = doc.attach_print
+    itemData['print_format'] = doc.print_format
     item_list.append(itemData)
 print(item_list)
-
-
-workflow_action_master = [{'name': 'Email Error', 'workflow_action_name': 'Email Error', 'doctype': 'Workflow Action Master'}, {'name': 'Send Receipt', 'workflow_action_name': 'Send Receipt', 'doctype': 'Workflow Action Master'}, {'name': 'Delete', 'workflow_action_name': 'Delete', 'doctype': 'Workflow Action Master'}, {'name': 'Accept', 'workflow_action_name': 'Accept', 'doctype': 'Workflow Action Master'}, {'name': 'Submit', 'workflow_action_name': 'Submit', 'doctype': 'Workflow Action Master'}, {'name': 'Review', 'workflow_action_name': 'Review', 'doctype': 'Workflow Action Master'}, {'name': 'Reject', 'workflow_action_name': 'Reject', 'doctype': 'Workflow Action Master'}, {'name': 'Approve', 'workflow_action_name': 'Approve', 'doctype': 'Workflow Action Master'}]
-workflow_state = [{'doctype': 'Workflow State', 'name': 'Pending', 'workflow_state_name': 'Pending', 'icon': 'question-sign', 'style': ''}, {'doctype': 'Workflow State', 'name': 'Approved', 'workflow_state_name': 'Approved', 'icon': 'ok-sign', 'style': 'Success'}, {'doctype': 'Workflow State', 'name': 'Rejected', 'workflow_state_name': 'Rejected', 'icon': 'remove', 'style': 'Danger'}, {'doctype': 'Workflow State', 'name': 'Draft', 'workflow_state_name': 'Draft', 'icon': '', 'style': ''}, {'doctype': 'Workflow State', 'name': 'To Financial Committee', 'workflow_state_name': 'To Financial Committee', 'icon': '', 'style': ''}, {'doctype': 'Workflow State', 'name': 'Financial Committee Review', 'workflow_state_name': 'Financial Committee Review', 'icon': '', 'style': ''}, {'doctype': 'Workflow State', 'name': 'Selection Committee Review', 'workflow_state_name': 'Selection Committee Review', 'icon': '', 'style': ''}, {'doctype': 'Workflow State', 'name': 'Admin Review', 'workflow_state_name': 'Admin Review', 'icon': '', 'style': ''}, {'doctype': 'Workflow State', 'name': 'Submitted', 'workflow_state_name': 'Submitted', 'icon': '', 'style': ''}, {'doctype': 'Workflow State', 'name': 'Financial Committee Rejected', 'workflow_state_name': 'Financial Committee Rejected', 'icon': '', 'style': ''}, {'doctype': 'Workflow State', 'name': 'Selection Committee Rejected', 'workflow_state_name': 'Selection Committee Rejected', 'icon': '', 'style': ''}, {'doctype': 'Workflow State', 'name': 'Deleted', 'workflow_state_name': 'Deleted', 'icon': '', 'style': ''}, {'doctype': 'Workflow State', 'name': 'Receipt Received', 'workflow_state_name': 'Receipt Received', 'icon': '', 'style': ''}, {'doctype': 'Workflow State', 'name': 'Receipt Email Error', 'workflow_state_name': 'Receipt Email Error', 'icon': '', 'style': ''}, {'doctype': 'Workflow State', 'name': 'Email Error', 'workflow_state_name': 'Email Error', 'icon': '', 'style': ''}]
