@@ -143,33 +143,3 @@ def execute():
     task_doctype.save(ignore_permissions=True)
 
     frappe.flags.developer_mode = 0
-
-doctype = "Notification"
-list = frappe.get_list(doctype)
-item_list = []
-for item in list:
-    itemData = {}
-    doc = frappe.get_doc(doctype,item['name'])
-    itemData['doctype'] = doctype
-    itemData['name'] = doc.name
-    itemData['enabled'] = doc.enabled
-    itemData['channel'] = doc.channel
-    itemData['subject'] = doc.subject
-    itemData['document_type'] = doc.document_type
-    itemData['is_standard'] = doc.is_standard
-    itemData['module'] = doc.module
-    itemData['event'] = doc.event
-    itemData['method'] = doc.method
-    itemData['date_changed'] = doc.date_changed
-    itemData['days_in_advance'] = doc.days_in_advance
-    itemData['value_changed'] = doc.value_changed
-    itemData['send_system_notification'] = doc.send_system_notification
-    itemData['condition'] = doc.condition
-    itemData['set_property_after_alert'] = doc.set_property_after_alert
-    itemData['property_value'] = doc.property_value
-    itemData['send_to_all_assignees'] = doc.send_to_all_assignees
-    itemData['message'] = doc.message
-    itemData['attach_print'] = doc.attach_print
-    itemData['print_format'] = doc.print_format
-    item_list.append(itemData)
-print(item_list)

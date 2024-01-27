@@ -10,12 +10,13 @@
  "engine": "InnoDB",
  "field_order": [
   "subject",
+  "subject_voice",
+  "attachments",
   "description",
   "machine",
   "is_periodic",
   "assignee_notes",
   "maintenance_manager_notes",
-  "attachments",
   "naming_series",
   "amended_from",
   "maintenance_assignee",
@@ -78,11 +79,11 @@
   },
   {
    "fieldname": "attachments",
-   "fieldtype": "Attach",
+   "fieldtype": "Attach Image",
    "in_edit": 1,
    "in_preview": 1,
    "in_view": 1,
-   "label": "Attachments"
+   "label": "Image Attachments"
   },
   {
    "fieldname": "naming_series",
@@ -127,12 +128,21 @@
    "fieldname": "seen",
    "fieldtype": "Check",
    "label": "Seen"
+  },
+  {
+   "fieldname": "subject_voice",
+   "fieldtype": "Attach",
+   "in_edit": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Voice Attachments",
+   "options": "Voice"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-01-03 15:50:45.242827",
+ "modified": "2024-01-27 13:31:10.247332",
  "modified_by": "Administrator",
  "module": "Custom Api",
  "name": "Machine Maintenance Request",
@@ -149,6 +159,28 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "role": "All",
+   "share": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Employee",
+   "share": 1,
+   "submit": 1,
    "write": 1
   }
  ],

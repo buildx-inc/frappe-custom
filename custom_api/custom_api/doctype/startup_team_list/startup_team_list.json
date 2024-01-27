@@ -8,6 +8,7 @@
  "field_order": [
   "full_name",
   "title",
+  "residence",
   "workload",
   "salary",
   "gender",
@@ -111,12 +112,20 @@
    "label": "Email",
    "options": "email",
    "validation": "{\n    \"reqd\" : 1\n}"
+  },
+  {
+   "fieldname": "residence",
+   "fieldtype": "Data",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Location of Residence",
+   "validation": "{\n    \"reqd\" : 1\n}"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-01-10 14:57:46.912020",
+ "modified": "2024-01-25 12:01:18.694604",
  "modified_by": "Administrator",
  "module": "Custom Api",
  "name": "Startup Team List",

@@ -12,22 +12,23 @@
   "startup_name",
   "image",
   "stage_development",
+  "registration_type",
   "website",
   "establishment_date",
+  "locations_of_registration",
+  "address",
   "short_description",
   "differentiation_and_services",
-  "registration_type",
-  "location_of_registration",
+  "kpis",
   "sector",
-  "address",
   "telephone_number",
   "startup_email",
+  "buffer_field",
   "privacy",
   "naming_series",
   "team_members_section",
   "founder_info",
   "shareholders_list",
-  "founder_contact",
   "team_info_section",
   "team_members",
   "financial_sb",
@@ -36,27 +37,38 @@
   "total_cost",
   "direct_cost",
   "indirect_cost",
-  "anual_salary_24",
+  "avg_revenu_23",
+  "quart_expenses_23",
   "anual_revenu",
+  "anual_salary_24",
   "expected_anual_salary",
+  "personal_investment",
   "grants_amount",
   "providers",
   "funded_amount",
   "investors_names",
+  "runway_end",
+  "debt_amount",
+  "where_are_your_startup_bank_registrations",
   "iw_sb",
   "iw_h",
   "affected_workspace",
   "affected_operations",
   "affected_revenues",
   "member_death",
+  "team_members_injured",
   "member_displacement",
   "member_imprisonment",
+  "dmg_more_info",
   "current_needs",
+  "current_needs_desc",
   "location",
   "doc_sb",
   "certificate",
   "pitch_deck",
   "financial_projections",
+  "buffer_field_2",
+  "acknowledgement",
   "amended_from",
   "is_submitted",
   "approved_by",
@@ -120,7 +132,7 @@
    "in_edit": 1,
    "in_preview": 1,
    "in_view": 1,
-   "label": "Differentiation and Services",
+   "label": "Services and Differentiation",
    "validation": "{\n    \"reqd\" : 1\n}"
   },
   {
@@ -146,18 +158,6 @@
    "radio_group": 1
   },
   {
-   "default": "Palestine",
-   "fieldname": "location_of_registration",
-   "fieldtype": "Select",
-   "in_edit": 1,
-   "in_list_view": 1,
-   "in_preview": 1,
-   "in_view": 1,
-   "label": "Location of Registration",
-   "options": "Palestine\nDelaware - US State\nUnited Arab Emirates\nKingdom Saudi Arabia\nOther \u2026",
-   "radio_group": 1
-  },
-  {
    "default": "Software as a Service (SaaS)",
    "fieldname": "sector",
    "fieldtype": "Select",
@@ -166,8 +166,7 @@
    "in_preview": 1,
    "in_view": 1,
    "label": "Sector",
-   "options": "Software as a Service (SaaS)\nArtificial Intelligence (AI) and Machine Learning (ML)\nFintech (Financial Technology)\nHealth Tech (Digital Health)\nE-commerce and Online Marketplaces\nEdTech (Education Technology)\nCybersecurity\nCleanTech (Clean Energy Technology)\nAugmented Reality (AR) and Virtual Reality (VR)\nRobotics and Automation\nAgriTech (Agriculture Technology)\nTravel Tech\nGaming and Entertainment Tech\nLogistics and Supply Chain Tech\nOther\u2026",
-   "radio_group": 1
+   "options": "Software as a Service (SaaS)\nArtificial Intelligence (AI) and Machine Learning (ML)\nFintech (Financial Technology)\nHealth Tech (Digital Health)\nE-commerce and Online Marketplaces\nEdTech (Education Technology)\nCybersecurity\nCleanTech (Clean Energy Technology)\nAugmented Reality (AR) and Virtual Reality (VR)\nRobotics and Automation\nAgriTech (Agriculture Technology)\nTravel Tech\nGaming and Entertainment Tech\nLogistics and Supply Chain Tech\nOther\u2026"
   },
   {
    "fieldname": "address",
@@ -213,7 +212,7 @@
    "in_preview": 1,
    "in_view": 1,
    "label": "Email",
-   "options": "email",
+   "options": "Email",
    "validation": "{\n    \"reqd\" : 1\n}"
   },
   {
@@ -229,14 +228,8 @@
    "fieldtype": "Heading",
    "in_edit": 1,
    "in_view": 1,
-   "label": "Founder Info",
+   "label": "Founders Info",
    "options": "user"
-  },
-  {
-   "fieldname": "founder_contact",
-   "fieldtype": "Link",
-   "label": "Founder Contact",
-   "options": "Startup Contact"
   },
   {
    "fieldname": "team_info_section",
@@ -256,7 +249,6 @@
    "options": "coin"
   },
   {
-   "description": "USD",
    "fieldname": "monthly_exp",
    "fieldtype": "Currency",
    "in_edit": 1,
@@ -266,7 +258,6 @@
    "validation": "{\n    \"reqd\" : 1\n}"
   },
   {
-   "description": "USD",
    "fieldname": "annual_salary",
    "fieldtype": "Currency",
    "in_edit": 1,
@@ -276,7 +267,6 @@
    "validation": "{\n    \"reqd\" : 1\n}"
   },
   {
-   "description": "USD",
    "fieldname": "total_cost",
    "fieldtype": "Currency",
    "in_edit": 1,
@@ -286,7 +276,6 @@
    "validation": "{\n    \"reqd\" : 1\n}"
   },
   {
-   "description": "USD",
    "fieldname": "direct_cost",
    "fieldtype": "Currency",
    "in_edit": 1,
@@ -296,7 +285,6 @@
    "validation": "{\n    \"reqd\" : 1\n}"
   },
   {
-   "description": "USD",
    "fieldname": "indirect_cost",
    "fieldtype": "Currency",
    "in_edit": 1,
@@ -306,17 +294,15 @@
    "validation": "{\n    \"reqd\" : 1\n}"
   },
   {
-   "description": "USD",
    "fieldname": "anual_salary_24",
    "fieldtype": "Currency",
    "in_edit": 1,
    "in_view": 1,
-   "label": "Annual Salary Bill for 2024",
+   "label": "Expected Annual Salary Bill for 2024",
    "options": "USD",
    "validation": "{\n    \"reqd\" : 1\n}"
   },
   {
-   "description": "USD",
    "fieldname": "anual_revenu",
    "fieldtype": "Currency",
    "in_edit": 1,
@@ -326,43 +312,40 @@
    "validation": "{\n    \"reqd\" : 1\n}"
   },
   {
-   "description": "USD",
    "fieldname": "expected_anual_salary",
    "fieldtype": "Currency",
    "in_edit": 1,
    "in_view": 1,
-   "label": "Expected Annual Salary Bill for 2024",
+   "label": "Expected Annual Revenues for 2024",
    "options": "USD",
    "validation": "{\n    \"reqd\" : 1\n}"
   },
   {
-   "description": "USD",
    "fieldname": "grants_amount",
    "fieldtype": "Currency",
    "in_edit": 1,
    "in_view": 1,
-   "label": "Amount of Funding Raised Through Grants",
+   "label": "Total Amount of Funding Raised Through Grants",
    "options": "USD"
   },
   {
-   "allow_in_quick_entry": 1,
+   "description": "Has your startup benefited from any of the following ecosystem enablers? (select all that apply)",
    "fieldname": "providers",
    "fieldtype": "Table",
    "in_edit": 1,
    "in_view": 1,
-   "label": "Grants Providers",
+   "label": "Ecosystem Enablers",
    "multiselect": "Grants Provider",
    "multiselect_id": "provider",
    "multiselect_key": "provider",
    "options": "Grants Provider List"
   },
   {
-   "description": "USD",
    "fieldname": "funded_amount",
    "fieldtype": "Currency",
    "in_edit": 1,
    "in_view": 1,
-   "label": "Amount of Funding Raised Through Investment",
+   "label": "Total Amount of Funding Raised Through Investment",
    "options": "USD"
   },
   {
@@ -371,7 +354,7 @@
    "fieldtype": "JSON",
    "in_edit": 1,
    "in_view": 1,
-   "label": "Investors Names "
+   "label": "Investors Names"
   },
   {
    "fieldname": "iw_sb",
@@ -432,7 +415,7 @@
    "fieldtype": "Select",
    "in_edit": 1,
    "in_view": 1,
-   "label": "Has the war caused displacement of any startup team member? ",
+   "label": "Have any of your startup team members been displaced during the war",
    "options": "Yes\nNo",
    "radio_group": 1,
    "validation": "{\n    \"reqd\" : 1\n}"
@@ -442,7 +425,7 @@
    "fieldtype": "Select",
    "in_edit": 1,
    "in_view": 1,
-   "label": "Has the war caused imprisonment of any startup team member? ",
+   "label": "Have any of your startup team members been imprisoned during the war",
    "options": "Yes\nNo",
    "radio_group": 1,
    "validation": "{\n    \"reqd\" : 1\n}"
@@ -452,8 +435,8 @@
    "fieldtype": "Select",
    "in_edit": 1,
    "in_view": 1,
-   "label": "What are the current needs? ",
-   "options": "Workspace\nTechnical equipment\nOperations\nSalaries\nOther\u2026",
+   "label": "What are the current pressing needs",
+   "options": "Workspace\nTechnical equipment\nOperations\nSalaries\nHuman resource\nOther\u2026",
    "radio_group": 1,
    "validation": "{\n    \"reqd\" : 1\n}"
   },
@@ -462,7 +445,7 @@
    "fieldtype": "Data",
    "in_edit": 1,
    "in_view": 1,
-   "label": "Where will the financial support be going towards if granted? "
+   "label": "Where will the financial support be going towards if granted"
   },
   {
    "fieldname": "doc_sb",
@@ -504,7 +487,7 @@
    "fieldtype": "Table",
    "in_edit": 1,
    "in_view": 1,
-   "label": "Shareholders/Owners of the startup",
+   "label": "Founders",
    "options": "Startup Contact List",
    "validation": "{\n    \"reqd\" : 1\n}"
   },
@@ -514,7 +497,7 @@
    "in_edit": 1,
    "in_view": 1,
    "label": "Team Members",
-   "options": "Startup Team List",
+   "options": "Startup Contact List",
    "validation": "{\n    \"reqd\" : 1\n}"
   },
   {
@@ -545,22 +528,138 @@
    "label": "Is Submitted"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "approved_by",
-   "fieldtype": "Table",
+   "fieldtype": "JSON",
    "label": "Approved By",
    "options": "User List"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "rejected_by",
-   "fieldtype": "Table",
+   "fieldtype": "JSON",
    "label": "Rejected By",
    "options": "User List"
+  },
+  {
+   "description": "Important KPIs and Traction Metrics for your startup",
+   "fieldname": "kpis",
+   "fieldtype": "Text",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "KPIs"
+  },
+  {
+   "description": " (insert all registered companies locations)",
+   "fieldname": "locations_of_registration",
+   "fieldtype": "JSON",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Location/s of Registration",
+   "options": "Palestine\nDelaware - US State\nUnited Arab Emirates\nKingdom Saudi Arabia\nOther \u2026"
+  },
+  {
+   "fieldname": "avg_revenu_23",
+   "fieldtype": "Currency",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Average Monthly Revenue for July, August and September 2023",
+   "options": "USD",
+   "validation": "{\n    \"reqd\" : 1\n}"
+  },
+  {
+   "fieldname": "quart_expenses_23",
+   "fieldtype": "Currency",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Average Monthly Financial Expenses for July, August and September 2023",
+   "options": "USD",
+   "validation": "{\n    \"reqd\" : 1\n}"
+  },
+  {
+   "fieldname": "personal_investment",
+   "fieldtype": "Currency",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Approximate Total Amount of Personal and Family Investment",
+   "options": "USD",
+   "validation": "{\n    \"reqd\" : 1\n}"
+  },
+  {
+   "fieldname": "runway_end",
+   "fieldtype": "Date",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "When does your cash runway end",
+   "options": "MM / yyyy"
+  },
+  {
+   "fieldname": "debt_amount",
+   "fieldtype": "Currency",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "If you have any debt, what\u2019s the amount",
+   "options": "USD"
+  },
+  {
+   "description": "insert banks name",
+   "fieldname": "where_are_your_startup_bank_registrations",
+   "fieldtype": "JSON",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Where are your startup bank registrations"
+  },
+  {
+   "fieldname": "team_members_injured",
+   "fieldtype": "Select",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Have any of your startup team members been injured during the war",
+   "options": "Yes\nNo",
+   "radio_group": 1,
+   "validation": "{\n    \"reqd\":1\n}"
+  },
+  {
+   "fieldname": "dmg_more_info",
+   "fieldtype": "Text",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Would you like to add more information about the damage caused by the War on Gaza "
+  },
+  {
+   "fieldname": "current_needs_desc",
+   "fieldtype": "Text",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Kindly elaborate on the pressing needs addressed in the previous question"
+  },
+  {
+   "default": "0",
+   "description": "I hereby declare that the information provided in the Startup grant application form is true and correct to the best of my knowledge.",
+   "fieldname": "acknowledgement",
+   "fieldtype": "Check",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Acknowledgement",
+   "validation": "{\n    \"reqd\" : 1\n}"
+  },
+  {
+   "fieldname": "buffer_field",
+   "fieldtype": "Read Only",
+   "in_edit": 1,
+   "in_view": 1
+  },
+  {
+   "fieldname": "buffer_field_2",
+   "fieldtype": "Read Only",
+   "in_edit": 1,
+   "in_view": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-01-21 18:29:44.755695",
+ "modified": "2024-01-25 16:07:26.693916",
  "modified_by": "Administrator",
  "module": "Custom Api",
  "name": "Startup Grant Application",

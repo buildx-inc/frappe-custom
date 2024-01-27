@@ -6,11 +6,14 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "startup_contact",
-  "full_name",
+  "first_name",
+  "middle_name",
+  "last_name",
   "gender",
   "title",
+  "residence",
   "workload",
+  "salary",
   "id_type",
   "id_number",
   "date_of_birth",
@@ -18,22 +21,6 @@
   "email"
  ],
  "fields": [
-  {
-   "fieldname": "startup_contact",
-   "fieldtype": "Link",
-   "label": "Startup Contact",
-   "options": "Startup Contact",
-   "validation": "\"\""
-  },
-  {
-   "fieldname": "full_name",
-   "fieldtype": "Data",
-   "in_edit": 1,
-   "in_list_view": 1,
-   "in_view": 1,
-   "label": "Full Name",
-   "validation": "{\n    \"reqd\":1\n}"
-  },
   {
    "fieldname": "title",
    "fieldtype": "Data",
@@ -109,12 +96,57 @@
    "label": "Gender",
    "options": "Male\nFemale\nOther..",
    "validation": "{\n    \"reqd\":1\n}"
+  },
+  {
+   "fieldname": "first_name",
+   "fieldtype": "Data",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_view": 1,
+   "label": "First Name",
+   "validation": "{\n    \"reqd\":1\n}"
+  },
+  {
+   "fieldname": "middle_name",
+   "fieldtype": "Data",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_view": 1,
+   "label": "Middle Name"
+  },
+  {
+   "fieldname": "last_name",
+   "fieldtype": "Data",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_view": 1,
+   "label": "Last Name",
+   "validation": "{\n    \"reqd\":1\n}"
+  },
+  {
+   "fieldname": "residence",
+   "fieldtype": "Data",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_view": 1,
+   "label": "Location of Residence",
+   "validation": "{\n    \"reqd\" : 1\n}"
+  },
+  {
+   "fieldname": "salary",
+   "fieldtype": "Currency",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_view": 1,
+   "label": "Salary",
+   "options": "USD",
+   "validation": "{\n    \"reqd\" : 1\n}"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-01-11 12:18:39.070311",
+ "modified": "2024-01-25 13:07:43.217012",
  "modified_by": "Administrator",
  "module": "Custom Api",
  "name": "Startup Contact List",

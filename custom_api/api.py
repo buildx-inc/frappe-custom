@@ -1,14 +1,8 @@
-import base64
-import binascii
 import json
-from urllib.parse import urlencode, urlparse
-
 import frappe
 import frappe.client
 import frappe.handler
 from frappe import _
-from frappe.utils.data import sbool
-from frappe.utils.response import build_response
 from frappe.desk.form.load import add_comments
 from frappe.utils.background_jobs import enqueue
 from frappe.desk.form.document_follow import follow_document
@@ -17,9 +11,8 @@ from frappe.desk.doctype.notification_log.notification_log import (
 	get_title,
 	get_title_html,
 )
-from frappe.share import add, get_users, set_permission
 from datetime import datetime
-
+from frappe.model.workflow import apply_workflow
 
 @frappe.whitelist()
 def get_takeaway_customer():
@@ -604,3 +597,34 @@ def save_doc(doc ,children=[]):
     new_doc = frappe.get_doc(doc)
     new_doc.save(ignore_permissions=True)
     
+@frappe.whitelist()
+def eval_application(doctype, name, action):
+    if doctype not in ['Team Grant Application','Startup Grant Application', 'Freelancer Grant Application']:
+        return "Invalid action for this doctype"
+    doc = frappe.get_doc(doctype,name)
+    if action == "Approve":
+        if doc.approved_by == None:
+            approved_by = []
+        else:
+            approved_by = json.loads(doc.approved_by)
+        if frappe.session.user in approved_by:
+            return "You have already approved this application"
+        approved_by.append(frappe.session.user)
+        doc.approved_by = json.dumps(approved_by)
+        doc.save(ignore_permissions=True)
+        if len(approved_by) > 2:
+            apply_workflow(doc, "Approve")
+    elif action == "Reject":
+        if doc.rejected_by == None:
+            rejected_by = []
+        else:
+            rejected_by = json.loads(doc.approved_by)
+        if frappe.session.user in rejected_by:
+            return "You have already rejected this application"
+        rejected_by.append(frappe.session.user)
+        doc.rejected_by = json.dumps(rejected_by)
+        doc.save(ignore_permissions=True)
+        if len(rejected_by) > 1:
+           apply_workflow(doc, "Reject")
+    else:
+        return "Invalid Action"
