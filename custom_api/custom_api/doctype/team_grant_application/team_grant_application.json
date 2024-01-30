@@ -1,0 +1,623 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2024-01-25 14:52:55.046957",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "info_sb",
+  "startup_name",
+  "image",
+  "website",
+  "establishment_date",
+  "locations_of_registration",
+  "address",
+  "short_description",
+  "differentiation_and_services",
+  "registration_type",
+  "location_of_registration",
+  "sector",
+  "telephone_number",
+  "startup_email",
+  "buffer_field",
+  "privacy",
+  "naming_series",
+  "team_members_section",
+  "founder_info",
+  "shareholders_list",
+  "team_info_section",
+  "team_members",
+  "financial_sb",
+  "monthly_exp",
+  "avg_revenu_23",
+  "quart_expenses_23",
+  "annual_salary",
+  "anual_salary_24",
+  "runway_end",
+  "debt_amount",
+  "bank_registrations",
+  "official_contract_that_was_lost_due_to_war",
+  "iw_sb",
+  "iw_h",
+  "affected_workspace",
+  "affected_operations",
+  "affected_revenues",
+  "member_death",
+  "team_members_injured",
+  "member_displacement",
+  "member_imprisonment",
+  "dmg_more_info",
+  "current_needs",
+  "current_needs_desc",
+  "doc_sb",
+  "certificate",
+  "company_profile",
+  "acknowledgement",
+  "is_submitted",
+  "approved_by",
+  "rejected_by",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "description": "Tab",
+   "fieldname": "info_sb",
+   "fieldtype": "Section Break",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "General Info and Legal Incorporation",
+   "options": "info",
+   "validation": "\"reqd\""
+  },
+  {
+   "fieldname": "startup_name",
+   "fieldtype": "Data",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Company Name",
+   "reqd": 1,
+   "validation": "{\"reqd\" : 1}"
+  },
+  {
+   "fieldname": "image",
+   "fieldtype": "Attach Image",
+   "in_edit": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Logo"
+  },
+  {
+   "fieldname": "website",
+   "fieldtype": "Data",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Website",
+   "options": "website",
+   "validation": "{}"
+  },
+  {
+   "fieldname": "establishment_date",
+   "fieldtype": "Date",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Establishment Date",
+   "options": "MM / yyyy",
+   "validation": "{\"reqd\":1}"
+  },
+  {
+   "fieldname": "short_description",
+   "fieldtype": "Text Editor",
+   "in_edit": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Short Description",
+   "validation": "{\n    \"reqd\" : 1\n}"
+  },
+  {
+   "fieldname": "differentiation_and_services",
+   "fieldtype": "Text Editor",
+   "in_edit": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Services",
+   "validation": "{\n    \"reqd\" : 1\n}"
+  },
+  {
+   "default": "Regular limited liability company",
+   "fieldname": "registration_type",
+   "fieldtype": "Select",
+   "in_edit": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Registration Type",
+   "options": "Regular public company\nRegular limited liability company\nSharing company (Public Shareholding) limited liability company\nPrivate limited liability corporation\nForeign Shareholding Company\nIn process of legal registration/ committed to register with Ministry of National Economy",
+   "radio_group": 1
+  },
+  {
+   "default": "Palestine",
+   "fieldname": "location_of_registration",
+   "fieldtype": "Select",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Location of Registration",
+   "options": "Palestine\nDelaware - US State\nUnited Arab Emirates\nKingdom Saudi Arabia\nOther \u2026",
+   "radio_group": 1
+  },
+  {
+   "description": " (insert all registered companies locations)",
+   "fieldname": "locations_of_registration",
+   "fieldtype": "JSON",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Location/s of Registration",
+   "options": "Palestine\nDelaware - US State\nUnited Arab Emirates\nKingdom Saudi Arabia\nOther \u2026"
+  },
+  {
+   "default": "Software as a Service (SaaS)",
+   "fieldname": "sector",
+   "fieldtype": "Select",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Sector",
+   "options": "Software as a Service (SaaS)\nArtificial Intelligence (AI) and Machine Learning (ML)\nFintech (Financial Technology)\nHealth Tech (Digital Health)\nE-commerce and Online Marketplaces\nEdTech (Education Technology)\nCybersecurity\nCleanTech (Clean Energy Technology)\nAugmented Reality (AR) and Virtual Reality (VR)\nRobotics and Automation\nAgriTech (Agriculture Technology)\nTravel Tech\nGaming and Entertainment Tech\nLogistics and Supply Chain Tech\nOther\u2026"
+  },
+  {
+   "fieldname": "address",
+   "fieldtype": "Data",
+   "in_edit": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Address"
+  },
+  {
+   "fieldname": "telephone_number",
+   "fieldtype": "Data",
+   "in_edit": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Telephone Number",
+   "options": "phone",
+   "validation": "{\n    \"reqd\" : 1\n}"
+  },
+  {
+   "fieldname": "startup_email",
+   "fieldtype": "Data",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Email",
+   "options": "Email",
+   "validation": "{\n    \"reqd\" : 1\n}"
+  },
+  {
+   "default": "0",
+   "description": "Do you give consent for the RISE Palestine program to use the information provided in this section for program impact reporting",
+   "fieldname": "privacy",
+   "fieldtype": "Check",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Privacy",
+   "radio_group": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming",
+   "options": "STARTUP-APP-"
+  },
+  {
+   "fieldname": "team_members_section",
+   "fieldtype": "Section Break",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Team Members",
+   "options": "user"
+  },
+  {
+   "fieldname": "founder_info",
+   "fieldtype": "Heading",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Founders Info",
+   "options": "user"
+  },
+  {
+   "alias": "Founders",
+   "description": "Must provide full name, title, ID type, ID number, date of birth, and workload (full-time or part-time) for each shareholder/owner. Download List of shareholders/owners template.",
+   "fieldname": "shareholders_list",
+   "fieldtype": "Table",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Founders",
+   "options": "Startup Contact List",
+   "validation": "{\n    \"reqd\" : 1\n}"
+  },
+  {
+   "fieldname": "team_info_section",
+   "fieldtype": "Heading",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Team Info",
+   "options": "users"
+  },
+  {
+   "fieldname": "team_members",
+   "fieldtype": "Table",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Team Members",
+   "options": "Startup Contact List",
+   "validation": "{\n    \"reqd\" : 1\n}"
+  },
+  {
+   "description": "Tab",
+   "fieldname": "financial_sb",
+   "fieldtype": "Section Break",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Financial Performance & Loss",
+   "options": "coin"
+  },
+  {
+   "fieldname": "monthly_exp",
+   "fieldtype": "Currency",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Monthly Financial Expenses",
+   "options": "USD",
+   "validation": "{\n    \"reqd\" : 1\n}"
+  },
+  {
+   "fieldname": "annual_salary",
+   "fieldtype": "Currency",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Annual Salary Bill for 2023",
+   "options": "USD",
+   "validation": "{\n    \"reqd\" : 1\n}"
+  },
+  {
+   "fieldname": "avg_revenu_23",
+   "fieldtype": "Currency",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Average Monthly Revenue for July, August and September 2023",
+   "options": "USD",
+   "validation": "{\n    \"reqd\" : 1\n}"
+  },
+  {
+   "fieldname": "quart_expenses_23",
+   "fieldtype": "Currency",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Average Monthly Financial Expenses for July, August and September 2023",
+   "options": "USD",
+   "validation": "{\n    \"reqd\" : 1\n}"
+  },
+  {
+   "fieldname": "anual_salary_24",
+   "fieldtype": "Currency",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Expected Annual Salary Bill for 2024",
+   "options": "USD",
+   "validation": "{\n    \"reqd\" : 1\n}"
+  },
+  {
+   "fieldname": "runway_end",
+   "fieldtype": "Date",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Until what month in 2024 your cash is expected to last",
+   "options": "MM / yyyy"
+  },
+  {
+   "fieldname": "debt_amount",
+   "fieldtype": "Currency",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "If you have any debt, what\u2019s the amount",
+   "options": "USD"
+  },
+  {
+   "fieldname": "iw_sb",
+   "fieldtype": "Section Break",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Impact of War",
+   "options": "label-alt-fill"
+  },
+  {
+   "fieldname": "iw_h",
+   "fieldtype": "Heading",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Impact of War of Your Startup"
+  },
+  {
+   "fieldname": "affected_workspace",
+   "fieldtype": "Select",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Has the war affected your startup workspace?",
+   "options": "Yes, completely destroyed\nYes, partially destroyed\nYes, restricted access by the startup team\nYes, no access by the startup team\nNo",
+   "radio_group": 1
+  },
+  {
+   "default": "Yes, partially affected, damage over %50",
+   "fieldname": "affected_operations",
+   "fieldtype": "Select",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Has the war affected your startup operations?",
+   "options": "Yes, completely stopped\nYes, partially affected, damage over %80\nYes, partially affected, damage over %50\nYes, partially affected, damage less than %50\nNo",
+   "radio_group": 1
+  },
+  {
+   "fieldname": "affected_revenues",
+   "fieldtype": "Select",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Has the war affected your startup revenues? ",
+   "options": "Yes, completely stopped\nYes, decreased over %80\nYes, decreased by over %50\nYes, decreased by over %20\nNo",
+   "radio_group": 1,
+   "validation": "{\n    \"reqd\" : 1\n}"
+  },
+  {
+   "fieldname": "member_death",
+   "fieldtype": "Select",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Has the war caused the killing of any startup team member? ",
+   "options": "Yes\nNo",
+   "radio_group": 1,
+   "validation": "{\n    \"reqd\" : 1\n}"
+  },
+  {
+   "fieldname": "team_members_injured",
+   "fieldtype": "Select",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Have any of your startup team members been injured during the war",
+   "options": "Yes\nNo",
+   "radio_group": 1,
+   "validation": "{\n    \"reqd\":1\n}"
+  },
+  {
+   "fieldname": "member_displacement",
+   "fieldtype": "Select",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Have any of your startup team members been displaced during the war",
+   "options": "Yes\nNo",
+   "radio_group": 1,
+   "validation": "{\n    \"reqd\" : 1\n}"
+  },
+  {
+   "fieldname": "member_imprisonment",
+   "fieldtype": "Select",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Have any of your startup team members been imprisoned during the war",
+   "options": "Yes\nNo",
+   "radio_group": 1,
+   "validation": "{\n    \"reqd\" : 1\n}"
+  },
+  {
+   "fieldname": "dmg_more_info",
+   "fieldtype": "Text",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Would you like to add more information about the damage caused by the War on Gaza "
+  },
+  {
+   "fieldname": "current_needs",
+   "fieldtype": "Select",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "What are the current pressing needs",
+   "options": "Workspace\nTechnical equipment\nOperations\nSalaries\nHuman resource\nOther\u2026",
+   "radio_group": 1,
+   "validation": "{\n    \"reqd\" : 1\n}"
+  },
+  {
+   "fieldname": "current_needs_desc",
+   "fieldtype": "Text",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Kindly elaborate on the pressing needs addressed in the previous question"
+  },
+  {
+   "fieldname": "doc_sb",
+   "fieldtype": "Section Break",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Supporting Documents",
+   "options": "file-text"
+  },
+  {
+   "fieldname": "certificate",
+   "fieldtype": "Attach",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Registration Certificate",
+   "validation": "{\n    \"reqd\" : 1\n}"
+  },
+  {
+   "default": "0",
+   "description": "I hereby declare that the information provided in the Startup grant application form is true and correct to the best of my knowledge.",
+   "fieldname": "acknowledgement",
+   "fieldtype": "Check",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Acknowledgement",
+   "validation": "{\n    \"reqd\" : 1\n}"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Team Grant Application",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_submitted",
+   "fieldtype": "Check",
+   "in_standard_filter": 1,
+   "label": "Is Submitted"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "approved_by",
+   "fieldtype": "JSON",
+   "label": "Approved By",
+   "options": "User List"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "rejected_by",
+   "fieldtype": "JSON",
+   "label": "Rejected By",
+   "options": "User List"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Team Grant Application",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "bank_registrations",
+   "fieldtype": "JSON",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Bank Registrations",
+   "validation": "{\n    \"reqd\": 1\n}"
+  },
+  {
+   "fieldname": "official_contract_that_was_lost_due_to_war",
+   "fieldtype": "Table",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Official Contract That Was Lost Due To War ",
+   "options": "Team Contract",
+   "validation": "{\n    \"reqd\" : 1\n}"
+  },
+  {
+   "fieldname": "company_profile",
+   "fieldtype": "Attach",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Tech Company Business Profile",
+   "validation": "{\n    \"reqd\" : 1\n}"
+  },
+  {
+   "fieldname": "buffer_field",
+   "fieldtype": "Read Only",
+   "in_edit": 1,
+   "in_view": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2024-01-25 17:00:15.685980",
+ "modified_by": "Administrator",
+ "module": "Custom Api",
+ "name": "Team Grant Application",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "if_owner": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Guest",
+   "select": 1,
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Financial Committee",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Selection Committee",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Admin",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
