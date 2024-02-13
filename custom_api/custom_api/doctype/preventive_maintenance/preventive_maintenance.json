@@ -1,0 +1,151 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:PREV-{machine}-{###}",
+ "creation": "2024-02-11 15:15:14.564306",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "subject",
+  "maintenance_order",
+  "machine",
+  "has_time_limit",
+  "time_limit_value",
+  "time_limit_unit",
+  "conditions",
+  "last_readings",
+  "check_list",
+  "team",
+  "tools"
+ ],
+ "fields": [
+  {
+   "fieldname": "subject",
+   "fieldtype": "Data",
+   "in_edit": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Subject"
+  },
+  {
+   "fieldname": "maintenance_order",
+   "fieldtype": "Link",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Maintenance Order",
+   "options": "Machine Maintenance Order"
+  },
+  {
+   "fetch_from": "maintenance_order.machine",
+   "fieldname": "machine",
+   "fieldtype": "Link",
+   "in_edit": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Machine",
+   "options": "Machine"
+  },
+  {
+   "fieldname": "last_readings",
+   "fieldtype": "JSON",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Last Readings"
+  },
+  {
+   "fieldname": "check_list",
+   "fieldtype": "Table",
+   "label": "Checklist",
+   "options": "Checklist"
+  },
+  {
+   "enable_actions": 1,
+   "fieldname": "team",
+   "fieldtype": "Table",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Team",
+   "multiselect": "User",
+   "multiselect_id": "full_name",
+   "multiselect_key": "user",
+   "options": "User List"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "tools",
+   "fieldtype": "Table",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Tools",
+   "multiselect": "Tool",
+   "multiselect_id": "tool_name",
+   "multiselect_key": "tool",
+   "options": "Tool List"
+  },
+  {
+   "fieldname": "time_limit_value",
+   "fieldtype": "Float",
+   "in_edit": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Time Limit Value"
+  },
+  {
+   "fieldname": "time_limit_unit",
+   "fieldtype": "Link",
+   "in_edit": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Time Limit Unit",
+   "options": "Period Unit"
+  },
+  {
+   "fieldname": "conditions",
+   "fieldtype": "Table",
+   "in_edit": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "is_list": 1,
+   "label": "Conditions",
+   "options": "Maintenance Condition"
+  },
+  {
+   "default": "0",
+   "fieldname": "has_time_limit",
+   "fieldtype": "Check",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Has Time Limit"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-02-12 20:29:34.576617",
+ "modified_by": "Administrator",
+ "module": "Custom Api",
+ "name": "Preventive Maintenance",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

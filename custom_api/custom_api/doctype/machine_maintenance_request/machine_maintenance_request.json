@@ -14,15 +14,19 @@
   "attachments",
   "description",
   "machine",
+  "maintenance_assignees",
   "is_periodic",
   "assignee_notes",
   "maintenance_manager_notes",
+  "maintenance_manager_notes_voice",
   "naming_series",
   "amended_from",
-  "maintenance_assignee",
-  "notes_visible",
   "urgent",
-  "seen"
+  "seen",
+  "check_list",
+  "team",
+  "tools",
+  "urgency"
  ],
  "fields": [
   {
@@ -38,16 +42,19 @@
    "fieldname": "description",
    "fieldtype": "Text Editor",
    "in_edit": 1,
-   "in_list_view": 1,
    "in_preview": 1,
    "in_view": 1,
    "label": "Description"
   },
   {
+   "allow_on_submit": 1,
+   "enable_actions": 1,
+   "external_link": 1,
    "fieldname": "machine",
    "fieldtype": "Link",
    "in_edit": 1,
    "in_list_view": 1,
+   "in_preview": 1,
    "in_view": 1,
    "label": "Machine",
    "options": "Machine"
@@ -64,7 +71,6 @@
    "fieldname": "assignee_notes",
    "fieldtype": "Text Editor",
    "in_edit": 1,
-   "in_preview": 1,
    "in_view": 1,
    "label": "Assignee Notes"
   },
@@ -73,11 +79,11 @@
    "buildx_depends_on": "(!formData.workflow_state || [\"Maintenance Request\",\"Claim\", \"Pending Claim\"].includes(formData.workflow_state))",
    "fieldname": "maintenance_manager_notes",
    "fieldtype": "Text Editor",
-   "in_preview": 1,
    "in_view": 1,
    "label": "Maintenance manager notes"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "attachments",
    "fieldtype": "Attach Image",
    "in_edit": 1,
@@ -101,23 +107,6 @@
    "read_only": 1
   },
   {
-   "fetch_from": "machine.maintenance_assignee",
-   "fieldname": "maintenance_assignee",
-   "fieldtype": "Read Only",
-   "in_list_view": 1,
-   "label": "Maintenance Assignee"
-  },
-  {
-   "default": "0",
-   "fieldname": "notes_visible",
-   "fieldtype": "Check",
-   "in_edit": 1,
-   "in_list_view": 1,
-   "in_preview": 1,
-   "in_view": 1,
-   "label": "Notes visible"
-  },
-  {
    "default": "0",
    "fieldname": "urgent",
    "fieldtype": "Check",
@@ -130,6 +119,7 @@
    "label": "Seen"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "subject_voice",
    "fieldtype": "Attach",
    "in_edit": 1,
@@ -137,12 +127,76 @@
    "in_view": 1,
    "label": "Voice Attachments",
    "options": "Voice"
+  },
+  {
+   "allow_on_submit": 1,
+   "enable_actions": 1,
+   "fieldname": "maintenance_assignees",
+   "fieldtype": "Table",
+   "in_edit": 1,
+   "in_view": 1,
+   "label": "Maintenance Assignees",
+   "multiselect": "User",
+   "multiselect_id": "full_name",
+   "multiselect_key": "user",
+   "options": "User List"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "maintenance_manager_notes_voice",
+   "fieldtype": "Attach",
+   "label": "Maintenance Manager Notes (Voice)",
+   "options": "Voice"
+  },
+  {
+   "allow_on_submit": 1,
+   "buildx_depends_on": "formData.workflow_state !== \"Maintenance Request\"",
+   "fieldname": "check_list",
+   "fieldtype": "Table",
+   "in_view": 1,
+   "label": "Check List",
+   "options": "Checklist"
+  },
+  {
+   "allow_on_submit": 1,
+   "buildx_depends_on": "formData.workflow_state !== \"Maintenance Request\"",
+   "fieldname": "team",
+   "fieldtype": "Table",
+   "in_view": 1,
+   "label": "Team",
+   "multiselect": "User",
+   "multiselect_id": "full_name",
+   "multiselect_key": "user",
+   "options": "User List"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "allow_on_submit": 1,
+   "buildx_depends_on": "formData.workflow_state !== \"Maintenance Request\"",
+   "fieldname": "tools",
+   "fieldtype": "Table",
+   "in_view": 1,
+   "label": "Tools",
+   "multiselect": "Tool",
+   "multiselect_id": "tool_name",
+   "multiselect_key": "tool",
+   "options": "Tool List"
+  },
+  {
+   "allow_on_submit": 1,
+   "buildx_depends_on": "formData.workflow_state !== \"Maintenance Request\"",
+   "description": "Critical:danger\nHigh:warning\nMedium:info\nLow:primary",
+   "fieldname": "urgency",
+   "fieldtype": "Select",
+   "in_view": 1,
+   "label": "Urgency",
+   "options": "Critical\nHigh\nMedium\nLow"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-01-27 13:31:10.247332",
+ "modified": "2024-02-06 22:46:44.378261",
  "modified_by": "Administrator",
  "module": "Custom Api",
  "name": "Machine Maintenance Request",

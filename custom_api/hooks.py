@@ -30,6 +30,16 @@ doc_events = {
     },
     "Email Queue": {
         "on_update": "custom_api.donor.donor.email_status_check"
+    },
+    "Machine Maintenance Request": {
+        "after_insert": ["custom_api.api.request_after_insert"],
+        "on_update" : ["custom_api.api.request_on_update"],
+        "on_update_after_submit" : ["custom_api.api.request_on_update"]
+    },
+    "Machine Maintenance Order": {
+        "after_insert": ["custom_api.api.order_share_to_team"],
+        "on_update" : ["custom_api.api.order_share_to_team"],
+        "on_update_after_submit" : ["custom_api.api.order_share_to_team"]
     }
 }
 # Includes in <head>

@@ -1,6 +1,7 @@
 import json
 import frappe
 import frappe.client
+from frappe.model.mapper import get_mapped_doc
 import frappe.handler
 from frappe import _
 from frappe.desk.form.load import add_comments
@@ -628,3 +629,61 @@ def eval_application(doctype, name, action):
            apply_workflow(doc, "Reject")
     else:
         return "Invalid Action"
+    
+frappe.whitelist()
+def request_after_insert(doc, method):
+    if len(doc.maintenance_assignees) == 0 and doc.machine != '':
+        machine = frappe.get_doc("Machine", doc.machine)
+        for assignee in machine.maintenance_assignees:
+            userlist = frappe.get_doc({
+                 "doctype":"User List",
+                 "parenttype": doc.doctype,
+                 "parentfield":"maintenance_assignees",
+                 "parent": doc.name,
+                 "user":assignee.user,
+                 })
+            userlist.save()
+            doc.maintenance_assignees.append(userlist)    
+        doc.save(ignore_permissions=True)
+    else:
+        request_on_update(doc,method)
+
+frappe.whitelist()
+def request_on_update(doc, method):
+    get_users = frappe.get_attr("frappe.share.get_users")
+    old_value = [old_user.user for old_user in get_users(doc.doctype, doc.name)]
+    new_value = [new_user.user for new_user in doc.maintenance_assignees]
+    added_users = list(set(new_value) - set(old_value))
+    removed_users = list(set(old_value) - set(new_value))
+    share_doc = frappe.get_attr("frappe.share.add")
+    if added_users:
+        new_users = []
+        for user in added_users:
+            new_users.append(user)
+            share_doc(doc.doctype, doc.name, user, read = 1, write = 1, share = 1)
+    if removed_users:
+        set_doc_permission = frappe.get_attr("frappe.share.set_permission")
+        for user in removed_users:
+            set_doc_permission(doc.doctype, doc.name, user, "read", 0)
+    frappe.db.commit()
+
+
+frappe.whitelist()
+def order_share_to_team(doc, method):
+    get_users = frappe.get_attr("frappe.share.get_users")
+    old_value = [old_user.user for old_user in get_users(doc.doctype, doc.name)]
+    new_value = [new_user.user for new_user in doc.team]
+    added_users = list(set(new_value) - set(old_value))
+    removed_users = list(set(old_value) - set(new_value))
+    share_doc = frappe.get_attr("frappe.share.add")
+    if added_users:
+        new_users = []
+        for user in added_users:
+            new_users.append(user)
+            share_doc(doc.doctype, doc.name, user, read = 1, write = 1, share = 1)
+    if removed_users:
+        set_doc_permission = frappe.get_attr("frappe.share.set_permission")
+        for user in removed_users:
+            set_doc_permission(doc.doctype, doc.name, user, "read", 0)
+             
+    frappe.db.commit()

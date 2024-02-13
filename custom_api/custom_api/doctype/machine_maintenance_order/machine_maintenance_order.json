@@ -8,46 +8,31 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "name1",
-  "description",
+  "subject",
+  "subject_voice",
+  "attachments",
   "machine",
+  "maintenance_assignees",
   "is_periodic",
   "assignee_notes",
-  "attachments",
   "maintenance_manager_notes",
+  "maintenance_manager_notes_voice",
   "check_list",
   "team",
   "tools",
   "notify_before",
   "notify_before_unit",
   "urgency",
-  "critical_notice",
   "report",
   "status",
   "amended_from",
   "naming_series",
   "deadline",
   "create_from",
-  "workers"
+  "maintenance_request",
+  "description"
  ],
  "fields": [
-  {
-   "fieldname": "name1",
-   "fieldtype": "Data",
-   "in_edit": 1,
-   "in_list_view": 1,
-   "in_preview": 1,
-   "in_view": 1,
-   "label": "Name"
-  },
-  {
-   "fieldname": "description",
-   "fieldtype": "Data",
-   "in_edit": 1,
-   "in_preview": 1,
-   "in_view": 1,
-   "label": "Description"
-  },
   {
    "fieldname": "machine",
    "fieldtype": "Link",
@@ -71,18 +56,19 @@
   {
    "fieldname": "assignee_notes",
    "fieldtype": "Text Editor",
-   "in_edit": 1,
    "in_view": 1,
    "label": "Assignee Notes"
   },
   {
    "fieldname": "attachments",
-   "fieldtype": "Attach",
+   "fieldtype": "Attach Image",
    "in_edit": 1,
+   "in_preview": 1,
    "in_view": 1,
-   "label": "Attachments"
+   "label": "Image Attachments"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "maintenance_manager_notes",
    "fieldtype": "Text Editor",
    "in_edit": 1,
@@ -99,6 +85,7 @@
    "options": "Checklist"
   },
   {
+   "allow_on_submit": 1,
    "enable_actions": 1,
    "fieldname": "team",
    "fieldtype": "Table",
@@ -140,6 +127,7 @@
    "options": "Seconds\nMinutes\nHours\nDays\nWeeks"
   },
   {
+   "description": "Critical:danger\nHigh:warning\nMedium:info\nLow:primary",
    "fieldname": "urgency",
    "fieldtype": "Select",
    "in_edit": 1,
@@ -147,31 +135,19 @@
    "in_preview": 1,
    "in_view": 1,
    "label": "Urgency",
-   "options": "High\nMedium\nLow"
+   "options": "Critical\nHigh\nMedium\nLow"
   },
   {
-   "default": "0",
-   "fieldname": "critical_notice",
-   "fieldtype": "Check",
-   "in_edit": 1,
-   "in_list_view": 1,
-   "in_preview": 1,
-   "in_view": 1,
-   "label": "Critical notice"
-  },
-  {
+   "allow_on_submit": 1,
    "fieldname": "report",
    "fieldtype": "Text Editor",
-   "in_edit": 1,
    "in_view": 1,
    "label": "Report"
   },
   {
    "fieldname": "status",
    "fieldtype": "Select",
-   "in_edit": 1,
    "in_list_view": 1,
-   "in_preview": 1,
    "in_view": 1,
    "label": "Status",
    "options": "Pending\nLate\nCritical\nIncomplete\nCompleted"
@@ -198,18 +174,6 @@
    "options": "Machine Maintenance Request"
   },
   {
-   "fieldname": "workers",
-   "fieldtype": "Table",
-   "in_edit": 1,
-   "in_preview": 1,
-   "in_view": 1,
-   "label": "Workers",
-   "multiselect": "User",
-   "multiselect_id": "full_name",
-   "multiselect_key": "user",
-   "options": "User List"
-  },
-  {
    "fieldname": "deadline",
    "fieldtype": "Date",
    "in_compact_list": 1,
@@ -218,12 +182,67 @@
    "in_preview": 1,
    "in_view": 1,
    "label": "Deadline"
+  },
+  {
+   "fieldname": "maintenance_request",
+   "fieldtype": "Link",
+   "label": "Maintenance Request",
+   "options": "Machine Maintenance Request"
+  },
+  {
+   "fieldname": "subject",
+   "fieldtype": "Data",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Subject"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "subject_voice",
+   "fieldtype": "Attach",
+   "in_edit": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Voice Attachments",
+   "options": "Voice"
+  },
+  {
+   "fieldname": "maintenance_manager_notes_voice",
+   "fieldtype": "Attach",
+   "in_edit": 1,
+   "in_preview": 1,
+   "in_view": 1,
+   "label": "Maintenance Manager Notes (Voice)",
+   "options": "Voice"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text Editor",
+   "in_view": 1,
+   "label": "Description"
+  },
+  {
+   "fieldname": "maintenance_assignees",
+   "fieldtype": "Table",
+   "in_view": 1,
+   "label": "Maintenance Assignees",
+   "multiselect": "User",
+   "multiselect_id": "full_name",
+   "multiselect_key": "user",
+   "options": "User List"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
- "links": [],
- "modified": "2024-01-07 21:00:07.764654",
+ "links": [
+  {
+   "link_doctype": "Machine Maintenance Request",
+   "link_fieldname": "name"
+  }
+ ],
+ "modified": "2024-02-06 22:44:29.605777",
  "modified_by": "Administrator",
  "module": "Custom Api",
  "name": "Machine Maintenance Order",

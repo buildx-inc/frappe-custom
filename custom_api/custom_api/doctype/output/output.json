@@ -1,37 +1,39 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2023-12-10 15:03:34.013681",
+ "creation": "2024-02-11 13:14:47.938573",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "item",
-  "waiting_time"
+  "description",
+  "parameters"
  ],
  "fields": [
   {
-   "fieldname": "item",
+   "fieldname": "description",
    "fieldtype": "Data",
    "in_list_view": 1,
    "in_preview": 1,
-   "label": "Item"
+   "in_view": 1,
+   "label": "Description"
   },
   {
-   "fieldname": "waiting_time",
-   "fieldtype": "Data",
+   "fieldname": "parameters",
+   "fieldtype": "JSON",
    "in_list_view": 1,
    "in_preview": 1,
-   "label": "Waiting Time"
+   "in_view": 1,
+   "label": "Parameters"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-02-11 19:36:57.688845",
+ "modified": "2024-02-11 13:14:47.938573",
  "modified_by": "Administrator",
  "module": "Custom Api",
- "name": "Checklist",
+ "name": "Output",
  "owner": "Administrator",
  "permissions": [],
  "sort_field": "modified",
