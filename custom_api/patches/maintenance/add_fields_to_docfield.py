@@ -23,7 +23,7 @@ def execute():
     doctype_doctype.save(ignore_permissions=True)
 
     docfield_doctype = frappe.get_doc("DocType","DocField")
-    
+
     docfield_fields = [
         {'doctype':'DocField','fieldname': 'alias', 'label': 'Alias', 'fieldtype': 'Data', 'options': None, 'reqd': 0, 'idx': 9},
         {'doctype':'DocField','fieldname': 'buildx_depends_on', 'label': 'Buildx Depends On', 'fieldtype': 'Data', 'options': None, 'reqd': 0, 'idx': 44},
@@ -64,8 +64,11 @@ def execute():
 
     for field in docfield_fields:
         if field['fieldname'] not in current_fields:
+            print("adding " + field['fieldname'] + " to DocField")
             field_doc = frappe.get_doc(field)
             docfield_doctype.fields.insert(field['idx'],field_doc)
+        else:
+            print("field:" + field['fieldname'] + " exists in DocField")
 
 
     docfield_doctype.save(ignore_permissions=True)
@@ -90,56 +93,56 @@ def execute():
 
     user_doctype.save(ignore_permissions=True)
 
-    project_doctype = frappe.get_doc("DocType","Project")
-    project_fields = [
-        {'doctype':'DocField','fieldname': 'project_location', 'label': 'Location', 'fieldtype': 'Data', 'options': 'None', 'reqd': 0, 'idx': 13},
-        {'doctype':'DocField','fieldname': 'sub_contractor', 'label': 'Sub Contractor', 'fieldtype': 'Table', 'options': 'Project Sub Contractor', 'reqd': 0, 'idx': 41},
-        {'doctype':'DocField','fieldname': 'main_contractor', 'label': 'Main Contractor', 'fieldtype': 'Link', 'options': 'Supplier', 'reqd': 0, 'idx': 40},
-        {'doctype':'DocField','fieldname': 'third_party_consultant', 'label': 'Third Party Consultant', 'fieldtype': 'Link', 'options': 'Supplier', 'reqd': 0, 'idx': 37},
-        {'doctype':'DocField','fieldname': 'consultant', 'label': 'Consultant', 'fieldtype': 'Link', 'options': 'Supplier', 'reqd': 0, 'idx': 36},
-        {'doctype':'DocField','fieldname': 'system_area', 'label': 'System Area', 'fieldtype': 'Float', 'options': 'None', 'reqd': 0, 'idx': 16},
-        {'doctype':'DocField','fieldname': 'project_manager', 'label': 'Project Manager', 'fieldtype': 'Link', 'options': 'User', 'reqd': 1, 'idx': 8},
-        {'doctype':'DocField','fieldname': 'project_manager_name', 'label': 'Project Manager', 'fieldtype': 'Data', 'options': 'None', 'reqd': 0, 'idx': 9},
-        {'doctype':'DocField','fieldname': 'project_management_company', 'label': 'Project Management Company', 'fieldtype': 'Link', 'options': 'Supplier', 'reqd': 0, 'idx': 39},
-        {'doctype':'DocField','fieldname': 'authority', 'label': 'Authority', 'fieldtype': 'Link', 'options': 'Supplier', 'reqd': 0, 'idx': 38},
-        {'doctype':'DocField','fieldname': 'total_area', 'label': 'Total Area', 'fieldtype': 'Float', 'options': 'None', 'reqd': 0, 'idx': 15},
-        {'doctype':'DocField','fieldname': 'entities', 'label': 'Entities', 'fieldtype': 'Heading', 'options': 'None', 'reqd': 0, 'idx': 34},
-        {'doctype':'DocField','fieldname': 'developer', 'label': 'Developer', 'fieldtype': 'Link', 'options': 'Supplier', 'reqd': 0, 'idx': 35},
-        {'doctype':'DocField','fieldname': 'parent_project', 'label': 'Parent Project', 'fieldtype': 'Link', 'options': 'Project', 'reqd': 0, 'idx': 5},
-        {'doctype':'DocField','fieldname': 'customer', 'label': 'Client', 'fieldtype': 'Link', 'options': 'Supplier', 'reqd': 1, 'idx': 6}
-    ]
+    # project_doctype = frappe.get_doc("DocType","Project")
+    # project_fields = [
+    #     {'doctype':'DocField','fieldname': 'project_location', 'label': 'Location', 'fieldtype': 'Data', 'options': 'None', 'reqd': 0, 'idx': 13},
+    #     {'doctype':'DocField','fieldname': 'sub_contractor', 'label': 'Sub Contractor', 'fieldtype': 'Table', 'options': 'Project Sub Contractor', 'reqd': 0, 'idx': 41},
+    #     {'doctype':'DocField','fieldname': 'main_contractor', 'label': 'Main Contractor', 'fieldtype': 'Link', 'options': 'Supplier', 'reqd': 0, 'idx': 40},
+    #     {'doctype':'DocField','fieldname': 'third_party_consultant', 'label': 'Third Party Consultant', 'fieldtype': 'Link', 'options': 'Supplier', 'reqd': 0, 'idx': 37},
+    #     {'doctype':'DocField','fieldname': 'consultant', 'label': 'Consultant', 'fieldtype': 'Link', 'options': 'Supplier', 'reqd': 0, 'idx': 36},
+    #     {'doctype':'DocField','fieldname': 'system_area', 'label': 'System Area', 'fieldtype': 'Float', 'options': 'None', 'reqd': 0, 'idx': 16},
+    #     {'doctype':'DocField','fieldname': 'project_manager', 'label': 'Project Manager', 'fieldtype': 'Link', 'options': 'User', 'reqd': 1, 'idx': 8},
+    #     {'doctype':'DocField','fieldname': 'project_manager_name', 'label': 'Project Manager', 'fieldtype': 'Data', 'options': 'None', 'reqd': 0, 'idx': 9},
+    #     {'doctype':'DocField','fieldname': 'project_management_company', 'label': 'Project Management Company', 'fieldtype': 'Link', 'options': 'Supplier', 'reqd': 0, 'idx': 39},
+    #     {'doctype':'DocField','fieldname': 'authority', 'label': 'Authority', 'fieldtype': 'Link', 'options': 'Supplier', 'reqd': 0, 'idx': 38},
+    #     {'doctype':'DocField','fieldname': 'total_area', 'label': 'Total Area', 'fieldtype': 'Float', 'options': 'None', 'reqd': 0, 'idx': 15},
+    #     {'doctype':'DocField','fieldname': 'entities', 'label': 'Entities', 'fieldtype': 'Heading', 'options': 'None', 'reqd': 0, 'idx': 34},
+    #     {'doctype':'DocField','fieldname': 'developer', 'label': 'Developer', 'fieldtype': 'Link', 'options': 'Supplier', 'reqd': 0, 'idx': 35},
+    #     {'doctype':'DocField','fieldname': 'parent_project', 'label': 'Parent Project', 'fieldtype': 'Link', 'options': 'Project', 'reqd': 0, 'idx': 5},
+    #     {'doctype':'DocField','fieldname': 'customer', 'label': 'Client', 'fieldtype': 'Link', 'options': 'Supplier', 'reqd': 1, 'idx': 6}
+    # ]
     
     
-    current_fields = []
+    # current_fields = []
 
-    for project_field in project_doctype.fields:
-        current_fields.append(project_field.fieldname)
+    # for project_field in project_doctype.fields:
+    #     current_fields.append(project_field.fieldname)
 
-    for field in project_fields:
-        if field['fieldname'] not in current_fields:
-            field_doc = frappe.get_doc(field)
-            project_doctype.fields.insert(field['idx'],field_doc)
+    # for field in project_fields:
+    #     if field['fieldname'] not in current_fields:
+    #         field_doc = frappe.get_doc(field)
+    #         project_doctype.fields.insert(field['idx'],field_doc)
 
-    project_doctype.save(ignore_permissions=True)
+    # project_doctype.save(ignore_permissions=True)
 
-    task_doctype = frappe.get_doc("DocType","Task")
-    task_fields = [
-        {'doctype':'DocField','fieldname': 'notes', 'label': 'Notes', 'fieldtype': 'Text', 'options': 'None', 'reqd': 0, 'idx': 30},
-        {'doctype':'DocField','fieldname': 'exp_start_date', 'label': 'Deadline', 'fieldtype': 'Date', 'options': 'None', 'reqd': 0, 'idx': 17},
-        {'doctype':'DocField','fieldname': 'users', 'label': 'Users', 'fieldtype': 'Table', 'options': 'Task User', 'reqd': 0, 'idx': 26}
-    ]
+    # task_doctype = frappe.get_doc("DocType","Task")
+    # task_fields = [
+    #     {'doctype':'DocField','fieldname': 'notes', 'label': 'Notes', 'fieldtype': 'Text', 'options': 'None', 'reqd': 0, 'idx': 30},
+    #     {'doctype':'DocField','fieldname': 'exp_start_date', 'label': 'Deadline', 'fieldtype': 'Date', 'options': 'None', 'reqd': 0, 'idx': 17},
+    #     {'doctype':'DocField','fieldname': 'users', 'label': 'Users', 'fieldtype': 'Table', 'options': 'Task User', 'reqd': 0, 'idx': 26}
+    # ]
     
     
-    current_fields = []
+    # current_fields = []
 
-    for task_field in task_doctype.fields:
-        current_fields.append(task_field.fieldname)
+    # for task_field in task_doctype.fields:
+    #     current_fields.append(task_field.fieldname)
 
-    for field in task_fields:
-        if field['fieldname'] not in current_fields:
-            field_doc = frappe.get_doc(field)
-            task_doctype.fields.insert(field['idx'],field_doc)
+    # for field in task_fields:
+    #     if field['fieldname'] not in current_fields:
+    #         field_doc = frappe.get_doc(field)
+    #         task_doctype.fields.insert(field['idx'],field_doc)
 
-    task_doctype.save(ignore_permissions=True)
+    # task_doctype.save(ignore_permissions=True)
 
     frappe.flags.developer_mode = 0
