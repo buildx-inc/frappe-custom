@@ -17,7 +17,6 @@ from datetime import datetime
 from frappe.model.workflow import apply_workflow
 
 
-
 @frappe.whitelist()
 def current_site():
     return frappe.local.site_path
@@ -37,15 +36,35 @@ def fetch_all_from_doctype(doctype, name = "", filters = None, fields = None):
             return "no entries found"
     else:
         return frappe.get_doc(doctype, name, fields = fields)
+    
+    
+
+@frappe.whitelist()
+def getComments(doctype, docname):
+    project_doc = frappe.get_doc(doctype, docname)
+    docinfo = frappe._dict(user_info={})
+    comments = add_comments(project_doc,docinfo)
+    comment_data = []
+    for comment in comments:
+        comment_owner = frappe.get_doc("User",comment['owner'])
+        comment['owner_role'] = comment_owner.role_profile_name
+        comment_data.append(comment)
+    return comment_data
 
 
 @frappe.whitelist(allow_guest=True)
 def get_metadata(doctype):
-    metadata = {}
-    metadata["fields"] = frappe.get_meta(doctype).fields
-    metadata["module"] = frappe.get_meta(doctype).module
-    metadata["is_submitable"] = frappe.get_meta(doctype).is_submittable
     return frappe.get_meta(doctype)
+
+@frappe.whitelist(allow_guest=True)
+def get_multiple_metadata(doctypes):
+    metadata = {}
+    for index, doctype in enumerate(json.loads(doctypes)):
+        try:
+            metadata[doctype] =  frappe.get_meta(doctype)
+        except frappe.DoesNotExistError as e:
+            metadata[doctype] = {"error": str(e)}
+    return metadata
 
 @frappe.whitelist()
 def dev():
@@ -136,4 +155,17 @@ def save_doc(doc ,children=[]):
             doc[child['field']] = child_doc.name
     new_doc = frappe.get_doc(doc)
     new_doc.save(ignore_permissions=True)
+    
+
+@frappe.whitelist(allow_guest=True)
+def file_upload(file_name, folder, doctype, docname):
+    file = frappe.new_doc("File")
+    file.file_name = file_name
+    file.attached_to_doctype = doctype
+    file.attached_to_name = docname
+    file.is_folder = 1
+    file.folder = folder
+    file.insert(ignore_if_duplicate=True)
+    return file
+    
     
