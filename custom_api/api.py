@@ -127,13 +127,28 @@ def get_user_notifications(limit=20):
 def get_logged_user():
     if frappe.session.user:
         user_doc = frappe.get_doc("User",frappe.session.user)
-        role_profiles = [role_profile.role_profile for role_profile in user_doc.role_profiles]
+        # role_profiles = [role_profile.role_profile for role_profile in user_doc.role_profiles]
         val = frappe.db.get_values("User", {'name': frappe.session.user}, "*", as_dict=True)
-        val[0]["role_profiles"] = role_profiles
+        # val[0]["role_profiles"] = role_profiles
         val[0]["site"] = frappe.local.site_path
     return val
         
-    
+@frappe.whitelist()
+def get_user_defaults(key):
+    default_list = frappe.get_list("DefaultValue",filters={"defkey":key,"parent":frappe.session.user})
+    if len(default_list) != 0:
+        default_values = []
+        for default_value in default_list:
+            doc = frappe.get_doc("DefaultValue",default_value['name'])
+            default_values.append(doc.defvalue)
+        return default_values
+    else:
+        return {}
+
+@frappe.whitelist()
+def set_user_defaults(key,value):
+    frappe.defaults.set_user_default(key,value,frappe.session.user)
+    frappe.db.commit()
     
 @frappe.whitelist(allow_guest=True)
 def get_logged_session():
