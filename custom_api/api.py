@@ -66,7 +66,7 @@ def get_multiple_metadata(doctypes):
             metadata[doctype] = {"error": str(e)}
     return metadata
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def dev():
     if frappe.conf.developer_mode:
         return 1
@@ -135,7 +135,7 @@ def get_logged_user():
         
 @frappe.whitelist()
 def get_user_defaults(key):
-    default_list = frappe.get_list("DefaultValue",filters={"defkey":key,"parent":frappe.session.user})
+    default_list = frappe.get_list("DefaultValue",filters={"defkey":key,"parent":frappe.session.user},ignore_permissions=True)
     if len(default_list) != 0:
         default_values = []
         for default_value in default_list:
