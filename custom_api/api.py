@@ -14,6 +14,8 @@ from frappe.desk.doctype.notification_log.notification_log import (
 	get_title_html,
 )
 from datetime import datetime
+import re
+import requests
 from frappe.model.workflow import apply_workflow
 
 
@@ -53,8 +55,18 @@ def getComments(doctype, docname):
 
 
 @frappe.whitelist(allow_guest=True)
-def get_metadata(doctype):
-    return frappe.get_meta(doctype)
+def get_metadata(doctype, with_child_tables = False):
+    if with_child_tables:
+        result = {}
+        meta = frappe.get_meta(doctype)
+        result['meta'] = meta
+        result['tables'] = {}
+        for field in meta._fields:
+            if meta._fields[field].fieldtype == 'Table':
+                result['tables'][meta._fields[field].fieldname] = frappe.get_meta(meta._fields[field].options)
+        return result
+    else:
+        return frappe.get_meta(doctype)
 
 @frappe.whitelist(allow_guest=True)
 def get_multiple_metadata(doctypes):
@@ -184,3 +196,22 @@ def file_upload(file_name, folder, doctype, docname):
     return file
     
     
+@frappe.whitelist()
+def get_exchange_rate_data(from_date,to_date):
+    response = requests.get("https://wcur.pma.ps/ar/webtools/currency/export")
+    regex = r"[a-zA-Z0-9]{32}"
+    matches = re.findall(regex, response.text)
+    key, val = matches[0], matches[1]
+    data = {
+        "from": from_date,
+        "to": to_date,
+        key: val,
+    }
+    
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Cookie': response.headers["Set-Cookie"]
+    }
+    
+    response = requests.post("https://wcur.pma.ps/ar/webtools/currency/export", headers=headers, data= data)
+    return response.text
