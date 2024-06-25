@@ -7,12 +7,14 @@ app_description = "Custom Api collection for core Buildx logic"
 app_email = "info@buildx.ps"
 app_license = "MIT"
 
+scheduler_events = {
+    "daily": [
+        "custom_api.api.create_employee_attendance"
+    ]
+}
 
 doc_events = {
     "Purchase Invoice":{
         "before_submit": "custom_api.api.purchase_invoice_before_submit"
-    },
-    "Employee Checkin":{
-        "after_insert": "custom_api.api.create_employee_attendance"
     }
 }
