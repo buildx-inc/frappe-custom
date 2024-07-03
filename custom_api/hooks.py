@@ -13,8 +13,8 @@ scheduler_events = {
     ]
 }
 
-doc_events = {
-    "Purchase Invoice":{
-        "before_submit": "custom_api.api.purchase_invoice_before_submit"
-    }
-}
+# doc_events = {
+#     "Purchase Invoice":{
+#         "after_submit": "custom_api.api.purchase_invoice_after_submit"
+#     }
+# }
