@@ -12,9 +12,3 @@ scheduler_events = {
         "custom_api.api.create_employee_attendance"
     ]
 }
-
-# doc_events = {
-#     "Purchase Invoice":{
-#         "after_submit": "custom_api.api.purchase_invoice_after_submit"
-#     }
-# }
