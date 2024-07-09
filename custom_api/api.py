@@ -225,7 +225,7 @@ def log(message, logging_enabled = True):
         print(message)
 
 
-def create_employee_attendance(doc, method):
+def create_employee_attendance():
     frappe.msgprint("Creating Employee Attendance")
     employee_list = frappe.get_list("Employee",fields=['name','first_name','last_name','hourly_rate','designation'])
     attendance_data = {}
