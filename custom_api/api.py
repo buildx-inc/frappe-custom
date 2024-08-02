@@ -376,11 +376,11 @@ def create_and_link_attendance(attendances):
             
     for checkin in checkin_log:
         checkin.attendance = attendance_doc.name
-        checkin.save()
-        checkin.submit()
+        checkin.save(ignore_permissions=True)
+        checkin.submit(ignore_permissions=True)
         
-    attendance_doc.save()
-    attendance_doc.submit()
+    attendance_doc.save(ignore_permissions=True)
+    attendance_doc.submit(ignore_permissions=True)
     frappe.db.commit()
     
 
