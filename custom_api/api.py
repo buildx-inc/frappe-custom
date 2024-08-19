@@ -94,7 +94,7 @@ def dev():
 
 
 @frappe.whitelist()
-def send_email(emails, subject, content, attachments=None):
+def send_email(emails, subject, content, attachments=None, cc=None):
 	# Convert the JSON string to a Python list
 	recipients = json.loads(emails)
 
@@ -105,6 +105,7 @@ def send_email(emails, subject, content, attachments=None):
 		"subject": subject,
 		"message": content,
 		"now": True,
+		"cc": cc,
 		"attachments": attachments or []  # Attachments list, default to an empty list if not provided
 	}
 	# Enqueue the email for sending
