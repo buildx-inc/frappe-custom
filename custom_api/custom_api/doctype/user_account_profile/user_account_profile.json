@@ -6,7 +6,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "email",
+  "\u0627\u0644\u0623\u0633\u0627\u0633\u064a\u0627\u062a",
   "first_name",
   "last_name",
   "birth_date",
@@ -14,8 +14,18 @@
   "id_number",
   "marital_status",
   "gender",
+  "mobile",
+  "land_line",
+  "\u0627\u0644\u0627\u062a\u0635\u0627\u0644_\u0648\u0627\u0644\u0645\u0639\u0644\u0648\u0645\u0627\u062a",
+  "email",
   "mobile_no",
   "phone",
+  "\u0645\u0639\u0644\u0648\u0645\u0627\u062a_\u0627\u0644\u0645\u062f\u0639\u0648",
+  "partner_first_name",
+  "partner_last_name",
+  "partner_gender",
+  "partner_id_number",
+  "\u0627\u0644\u0623\u0637\u0641\u0627\u0644",
   "children"
  ],
  "fields": [
@@ -23,50 +33,59 @@
    "fieldname": "email",
    "fieldtype": "Data",
    "label": "Email",
+   "read_only": 1,
    "unique": 1
   },
   {
    "fieldname": "first_name",
    "fieldtype": "Data",
-   "label": "First Name"
+   "label": "First Name",
+   "validation": "{\"reqd\" : 1}"
   },
   {
    "fieldname": "last_name",
    "fieldtype": "Data",
-   "label": "Last Name"
+   "label": "Last Name",
+   "validation": "{\"reqd\" : 1}"
   },
   {
    "fieldname": "birth_date",
    "fieldtype": "Date",
-   "label": "Date of Birth"
+   "label": "Date of Birth",
+   "validation": "{\"reqd\" : 1}"
   },
   {
    "fieldname": "city",
    "fieldtype": "Data",
-   "label": "City"
+   "label": "City",
+   "validation": "{\"reqd\" : 1}"
   },
   {
    "fieldname": "id_number",
    "fieldtype": "Data",
-   "label": "ID Number"
+   "label": "ID Number",
+   "validation": "{\"reqd\" : 1}"
   },
   {
    "fieldname": "marital_status",
    "fieldtype": "Select",
    "label": "Marital Status",
-   "options": "\nSingle\nMarried\nDivorced\nWidowed"
+   "options": "\nSingle\nMarried\nDivorced\nWidowed",
+   "validation": "{\"reqd\" : 1}"
   },
   {
    "fieldname": "gender",
    "fieldtype": "Select",
    "label": "Gender",
-   "options": "\nmale\nfemale"
+   "options": "\nmale\nfemale",
+   "validation": "{\"reqd\" : 1}"
   },
   {
    "fieldname": "mobile_no",
    "fieldtype": "Data",
    "label": "Mobile Number",
-   "options": "Phone"
+   "options": "Phone",
+   "validation": "{\"reqd\" : 1}"
   },
   {
    "fieldname": "phone",
@@ -79,11 +98,65 @@
    "fieldtype": "Table",
    "label": "Children",
    "options": "Person Entry List"
+  },
+  {
+   "fieldname": "partner_first_name",
+   "fieldtype": "Data",
+   "label": "First Name"
+  },
+  {
+   "fieldname": "partner_last_name",
+   "fieldtype": "Data",
+   "label": "Last Name"
+  },
+  {
+   "fieldname": "partner_gender",
+   "fieldtype": "Select",
+   "label": "Gender",
+   "options": "\nmale\nfemale"
+  },
+  {
+   "fieldname": "\u0627\u0644\u0623\u0633\u0627\u0633\u064a\u0627\u062a",
+   "fieldtype": "Heading",
+   "label": "\u0627\u0644\u0623\u0633\u0627\u0633\u064a\u0627\u062a"
+  },
+  {
+   "fieldname": "\u0627\u0644\u0627\u062a\u0635\u0627\u0644_\u0648\u0627\u0644\u0645\u0639\u0644\u0648\u0645\u0627\u062a",
+   "fieldtype": "Heading",
+   "label": "\u0627\u0644\u0627\u062a\u0635\u0627\u0644 \u0648\u0627\u0644\u0645\u0639\u0644\u0648\u0645\u0627\u062a"
+  },
+  {
+   "fieldname": "\u0645\u0639\u0644\u0648\u0645\u0627\u062a_\u0627\u0644\u0645\u062f\u0639\u0648",
+   "fieldtype": "Heading",
+   "label": "\u0627\u0644\u0634\u0631\u064a\u0643 / \u0627\u0644\u0637\u0631\u0641 \u0627\u0644\u0645\u062f\u0639\u0648"
+  },
+  {
+   "fieldname": "partner_id_number",
+   "fieldtype": "Data",
+   "label": "ID Number"
+  },
+  {
+   "fieldname": "\u0627\u0644\u0623\u0637\u0641\u0627\u0644",
+   "fieldtype": "Heading",
+   "label": "\u0627\u0644\u0623\u0637\u0641\u0627\u0644"
+  },
+  {
+   "fieldname": "mobile",
+   "fieldtype": "Data",
+   "label": "Mobile Number",
+   "options": "phone",
+   "validation": "{\"reqd\" : 1}"
+  },
+  {
+   "fieldname": "land_line",
+   "fieldtype": "Data",
+   "label": "Land Line",
+   "options": "phone"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-05-25 15:39:48.417982",
+ "modified": "2024-08-14 15:05:13.700179",
  "modified_by": "Administrator",
  "module": "Custom Api",
  "name": "User Account Profile",

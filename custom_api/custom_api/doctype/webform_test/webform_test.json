@@ -8,7 +8,8 @@
  "engine": "InnoDB",
  "field_order": [
   "name1",
-  "image"
+  "image",
+  "table"
  ],
  "fields": [
   {
@@ -20,11 +21,19 @@
    "fieldname": "image",
    "fieldtype": "Image",
    "label": "image"
+  },
+  {
+   "default": "asda",
+   "depends_on": "eval:doc.name1 == \"test\" && doc.name1 == \"asda\" || doc.name1 != \"asdasda\"",
+   "fieldname": "table",
+   "fieldtype": "Data",
+   "label": "asda",
+   "options": "asda"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-15 11:28:02.568463",
+ "modified": "2024-08-10 09:19:46.042941",
  "modified_by": "Administrator",
  "module": "Custom Api",
  "name": "webform test",
