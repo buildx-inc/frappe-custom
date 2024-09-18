@@ -566,26 +566,40 @@ def convert_docx_to_pdf():
 		return {"message": "Error converting document", "error": str(e)}, 500
 
 
-def update_employee_timesheet_on_attendance_creation(doc):
-	employee = doc["employee"]
-
-	working_hours = doc["working_hours"]
-	overtime_hours = doc["overtime_hours"]
-	normal_hours = working_hours - overtime_hours
-
-
-	in_time = doc["in_time"]
+def update_employee_timesheet_on_attendance_creation(doc, method):
+	employee = doc.employee
+	employee_doc = frappe.get_doc("Employee", employee)
+	if employee_doc.status != "Active":
+		return False
+	
+	working_hours = doc.working_hours
+	in_time = doc.in_time
+ 
 	attendance_month = in_time.month
 	attendance_year = in_time.year
 
 	timesheet_start_range = datetime(attendance_year, attendance_month, 1)
 	timesheet_end_range = datetime(attendance_year, attendance_month, calendar.monthrange(attendance_year, attendance_month)[1])
-	
-	timesheets = frappe.get_list("Timesheet", fields="*", filters = {"employee": employee, status: "Draft", "start_date": ["between", (timesheet_start_range, timesheet_end_range)], "end_date": ["between", (timesheet_start_range, timesheet_end_range)]})
+
+	timesheets = frappe.get_list("Timesheet", fields="*", filters = {"employee": employee, "docstatus": 0, "start_date": ["between", (timesheet_start_range.date(),timesheet_end_range.date())]})
 	
 	if(len(timesheets) == 0):
 		# create timesheet for this month
-		print("test")
+		timesheet = frappe.new_doc("Timesheet")
+		timesheet.start_date = timesheet_start_range
+		timesheet.end_date = timesheet_end_range
+		timesheet.employee = doc.employee
+		timesheet.append('time_logs',{'from_time':in_time, 'hours': working_hours, 'activity_type': 'Wage'})
 	else:
 		# append timesheet record for the day (multiply overtime hours with rate)
-		print("test")
+		timesheet = frappe.get_doc("Timesheet", timesheets[-1])
+		for log in timesheet.time_logs:
+			if log.from_time == in_time:
+				return False
+		timesheet.append('time_logs',{'from_time':in_time, 'hours': working_hours, 'activity_type': 'Wage'}) 
+	timesheet.save()
+ 
+ 
+@frappe.whitelist()
+def get_list_with_children(doctype,filters={}, fields=[]):
+    return [frappe.get_doc(doctype, doc_name) for doc_name in frappe.get_list(doctype, filters, fields)]
