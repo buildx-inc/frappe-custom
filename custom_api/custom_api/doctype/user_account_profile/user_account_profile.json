@@ -82,7 +82,7 @@
    "fieldname": "marital_status",
    "fieldtype": "Select",
    "label": "\u0627\u0644\u062d\u0627\u0644\u0629 \u0627\u0644\u0627\u062c\u062a\u0645\u0627\u0639\u064a\u0629",
-   "options": "\nSingle\nMarried\nDivorced\nWidowed",
+   "options": "\u0645\u062a\u0632\u0648\u062c/\u0629\n\u0645\u0637\u0644\u0642/\u0629\n\u0623\u0631\u0645\u0644/\u0629\n\u0623\u0639\u0632\u0628/ \u0639\u0632\u0628\u0627\u0621\n\u0645\u062a\u0632\u0648\u062c \u0644\u0623\u062e\u0631\u0649",
    "validation": "{\"reqd\" : 1}"
   },
   {
@@ -223,7 +223,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-09-14 12:22:13.552010",
+ "modified": "2024-09-18 11:38:49.531767",
  "modified_by": "Administrator",
  "module": "Custom Api",
  "name": "User Account Profile",
