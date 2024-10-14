@@ -23,7 +23,7 @@ from frappe.model.workflow import apply_workflow
 from collections import defaultdict
 import pdfkit
 from werkzeug.wrappers import Response
-
+from frappe.core.doctype.sms_settings.sms_settings import send_via_gateway
 
 
 @frappe.whitelist()
@@ -110,6 +110,7 @@ def send_email(emails, subject, content, attachments=None, cc=None):
 	}
 	# Enqueue the email for sending
 	enqueue(method=frappe.sendmail, queue="short", timeout=300, is_async=True, **email_args)
+	return email_args
 
 @frappe.whitelist()
 def send_notification(subject, users, doctype = None, doc_name = None, notification_type = None, email_content = None, attachment = None):
@@ -164,6 +165,23 @@ def get_user_defaults(key):
 	else:
 		return {}
 
+
+@frappe.whitelist()
+def send_multiple_channel_notifications(notification_data):
+    for notification in notification_data:
+        if notification['type'] == 'email':
+            for user in notification['receivers']:
+                send_email(json.dumps([user]), notification['subject'], notification['message'])
+                
+        elif notification['type'] == 'sms':
+            phone_numbers = []
+            for user in notification['receivers']:
+                phone_numbers.append("+972" + str(user))
+            send_via_gateway({'message': notification['message'], 'receiver_list':[phone_numbers]})
+        elif notification['type'] == 'system_notification':
+            for user in notification['users']:
+                send_notification(notification['subject'],json.dumps([user]),notification['doctype'],notification['docname'],'Alert',notification['message'])
+
 @frappe.whitelist()
 def set_user_defaults(key,value):
 	frappe.defaults.set_user_default(key,value,frappe.session.user)
@@ -172,6 +190,11 @@ def set_user_defaults(key,value):
 @frappe.whitelist(allow_guest=True)
 def get_logged_session():
 	return frappe.session
+
+@frappe.whitelist(allow_guest=True)
+def get_company_details():
+    return frappe.get_doc("Company", frappe.get_list("Company")[0])
+    
 
 @frappe.whitelist(allow_guest=True)
 def save_doc(doc ,children=[]):
@@ -603,3 +626,4 @@ def update_employee_timesheet_on_attendance_creation(doc, method):
 @frappe.whitelist()
 def get_list_with_children(doctype,filters={}, fields=[]):
     return [frappe.get_doc(doctype, doc_name) for doc_name in frappe.get_list(doctype, filters, fields)]
+

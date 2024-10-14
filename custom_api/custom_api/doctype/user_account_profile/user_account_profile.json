@@ -11,6 +11,8 @@
   "parent_name",
   "grandfather_name",
   "last_name",
+  "full_name",
+  "short_name",
   "birth_date",
   "city",
   "id_type",
@@ -28,6 +30,8 @@
   "partner_parent_name",
   "partner_grandfather_name",
   "partner_last_name",
+  "partner_full_name",
+  "partner_short_name",
   "partner_gender",
   "partner_id_type",
   "\u0627\u0644\u062c\u0646\u0633\u064a\u0629",
@@ -40,7 +44,6 @@
    "fieldname": "email",
    "fieldtype": "Data",
    "label": "\u0627\u0644\u0628\u0631\u064a\u062f \u0627\u0644\u0627\u0644\u0643\u062a\u0631\u0648\u0646\u064a",
-   "read_only": 1,
    "translatable": 1,
    "unique": 1
   },
@@ -52,7 +55,7 @@
   },
   {
    "fieldname": "last_name",
-   "fieldtype": "Data",
+   "fieldtype": "Read Only",
    "label": "\u0627\u0633\u0645 \u0627\u0644\u0639\u0627\u0626\u0644\u0629",
    "validation": "{\"reqd\" : 1}"
   },
@@ -219,11 +222,39 @@
    "fieldtype": "Data",
    "label": "\u0627\u0644\u062c\u0646\u0633\u064a\u0629",
    "set_only_once": 1
+  },
+  {
+   "fieldname": "full_name",
+   "fieldtype": "Read Only",
+   "hidden": 1,
+   "label": "Full Name",
+   "validation": "{\"reqd\" : 1}"
+  },
+  {
+   "fieldname": "short_name",
+   "fieldtype": "Read Only",
+   "hidden": 1,
+   "label": "Short Name",
+   "validation": "{\"reqd\" : 1}"
+  },
+  {
+   "fieldname": "partner_full_name",
+   "fieldtype": "Read Only",
+   "hidden": 1,
+   "label": "Partner Full Name",
+   "validation": "{\"reqd\" : 1}"
+  },
+  {
+   "fieldname": "partner_short_name",
+   "fieldtype": "Read Only",
+   "hidden": 1,
+   "label": "Partner Short Name",
+   "validation": "{\"reqd\" : 1}"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-09-18 11:38:49.531767",
+ "modified": "2024-10-14 15:50:31.719077",
  "modified_by": "Administrator",
  "module": "Custom Api",
  "name": "User Account Profile",
