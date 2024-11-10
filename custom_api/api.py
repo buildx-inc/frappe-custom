@@ -624,6 +624,39 @@ def update_employee_timesheet_on_attendance_creation(doc, method):
  
  
 @frappe.whitelist()
-def get_list_with_children(doctype,filters={}, fields=[]):
-    return [frappe.get_doc(doctype, doc_name) for doc_name in frappe.get_list(doctype, filters, fields)]
+def get_list_with_children(doctype,filters={}, fields=[], order_by="modified desc"):
+    return [frappe.get_doc(doctype, doc_name) for doc_name in frappe.get_list(doctype, filters, fields, order_by=order_by)]
 
+
+@frappe.whitelist()
+def vote(doctype, docname, fieldname, unique_field, values, is_delete):
+    doc = frappe.get_doc(doctype, docname)
+    
+    table_data = [f.get(unique_field) for f in doc.get(fieldname)]
+
+    for value in values:
+        if value.get(unique_field) in table_data:
+            for item in doc.get(fieldname):
+                if item.get(unique_field) == value.get(unique_field):
+                    if is_delete:
+                        doc.remove(item)
+                    else:
+                        for key, val in value.items():
+                            item.set(key, val)
+        else:
+            if not is_delete:
+                doc.append(fieldname, value)
+    
+    doc.save()
+    
+@frappe.whitelist()
+def custom_building_action(building_id,action):
+    user = frappe.session.user
+
+    if frappe.db.exists("Building Member", {"building": building_id, "user": user}):
+        if has_permission("Building", "building_manager", user=user):
+            return {"status": "success", "message": "Action completed with elevated permissions"}
+        else:
+            frappe.throw("You do not have sufficient permissions.")
+    else:
+        frappe.throw("User is not a member of this building.")
