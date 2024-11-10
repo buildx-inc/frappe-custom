@@ -1,0 +1,47 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:{parent}-{option_text}",
+ "creation": "2024-10-27 08:43:31.295997",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "option_text",
+  "color",
+  "votes"
+ ],
+ "fields": [
+  {
+   "fieldname": "option_text",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Option Text"
+  },
+  {
+   "default": "0",
+   "fieldname": "votes",
+   "fieldtype": "Int",
+   "label": "Votes"
+  },
+  {
+   "fieldname": "color",
+   "fieldtype": "Color",
+   "in_list_view": 1,
+   "label": "Color"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-10-30 11:02:26.131779",
+ "modified_by": "Administrator",
+ "module": "Custom Api",
+ "name": "Poll Option",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,0 +1,96 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:{building}-POLL-{MM}-{###}",
+ "creation": "2024-10-27 08:25:45.764573",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "building",
+  "status",
+  "question",
+  "options",
+  "votes"
+ ],
+ "fields": [
+  {
+   "fieldname": "building",
+   "fieldtype": "Link",
+   "label": "Building",
+   "options": "Building",
+   "table_modal_fields": "[]",
+   "table_type": "List"
+  },
+  {
+   "fieldname": "question",
+   "fieldtype": "Text Editor",
+   "label": "Poll Question",
+   "table_modal_fields": "[]",
+   "table_type": "List"
+  },
+  {
+   "fieldname": "options",
+   "fieldtype": "Table",
+   "label": "Options",
+   "options": "Poll Option",
+   "table_modal_fields": "[\"option_text\",\"color\"]",
+   "table_type": "Tags",
+   "tags_color_field": "color",
+   "tags_text_field": "option_text"
+  },
+  {
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Open\nClosed\nInactive",
+   "table_modal_fields": "[]",
+   "table_type": "List"
+  },
+  {
+   "fieldname": "votes",
+   "fieldtype": "Table",
+   "label": "Votes",
+   "options": "Poll Vote",
+   "table_modal_fields": "[]",
+   "table_type": "List"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-10-30 11:58:03.626111",
+ "modified_by": "Administrator",
+ "module": "Custom Api",
+ "name": "Poll",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Building User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

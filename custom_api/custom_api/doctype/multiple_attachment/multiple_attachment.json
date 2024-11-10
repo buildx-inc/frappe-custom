@@ -1,0 +1,38 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-10-17 15:33:21.070503",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "description",
+  "attachments"
+ ],
+ "fields": [
+  {
+   "fieldname": "attachments",
+   "fieldtype": "Attach",
+   "in_edit": 1,
+   "in_list_view": 1,
+   "label": "Attachments"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Description"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-10-17 15:41:22.029590",
+ "modified_by": "Administrator",
+ "module": "Custom Api",
+ "name": "Multiple Attachment",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
