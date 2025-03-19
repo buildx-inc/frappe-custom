@@ -11,6 +11,7 @@ from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_ent
 from hrms.hr.doctype.employee_checkin.employee_checkin import update_attendance_in_checkins
 from datetime import datetime, timedelta, date
 import calendar
+from frappe.auth import LoginManager
 from frappe.desk.form.document_follow import follow_document
 from frappe.desk.doctype.notification_log.notification_log import (
 	enqueue_create_notification,
@@ -24,7 +25,16 @@ from collections import defaultdict
 import pdfkit
 from werkzeug.wrappers import Response
 from frappe.core.doctype.sms_settings.sms_settings import send_via_gateway
+from io import BytesIO
+import random
 
+from openai import OpenAI
+
+site_settings = frappe.get_doc("Site Settings")
+if site_settings.openai_key != None:
+	client = OpenAI(
+		api_key=site_settings.openai_key
+	)
 
 @frappe.whitelist()
 def current_site():
@@ -59,6 +69,17 @@ def getComments(doctype, docname):
 		comment['owner_role'] = comment_owner.role_profile_name
 		comment_data.append(comment)
 	return comment_data
+
+@frappe.whitelist()
+def getToken():
+	return frappe.sessions.get_csrf_token()
+
+
+@frappe.whitelist(allow_guest=True)
+def currentSite():
+	return frappe.local.site
+
+
 
 
 @frappe.whitelist(allow_guest=True)
@@ -624,9 +645,37 @@ def update_employee_timesheet_on_attendance_creation(doc, method):
  
  
 @frappe.whitelist()
-def get_list_with_children(doctype,filters={}, fields=[], order_by="modified desc"):
-    return [frappe.get_doc(doctype, doc_name) for doc_name in frappe.get_list(doctype, filters, fields, order_by=order_by)]
+def get_list_with_children(doctype, filters=None, fields=None, order_by="modified desc"):
+    """
+    Fetch a list of documents with their children.
 
+    Args:
+        doctype (str): The DocType to query.
+        filters (dict or list, optional): Filters to apply. Defaults to None.
+        fields (list, optional): List of fields to fetch. Defaults to None.
+        order_by (str, optional): Order by clause. Defaults to "modified desc".
+
+    Returns:
+        list: List of documents with children.
+    """
+    try:
+        # Ensure filters and fields are valid
+        filters = filters or {}
+        fields = fields or ["name"]  # Default to fetching only the name if no fields are specified
+
+        # Ensure `filters` is correctly deserialized
+        if isinstance(filters, str):
+            import json
+            filters = json.loads(filters)
+
+        # Fetch the documents
+        doc_names = frappe.get_list(doctype, filters=filters, fields=fields, order_by=order_by)
+
+        # Retrieve full documents for the fetched names
+        return [frappe.get_doc(doctype, doc["name"]) for doc in doc_names]
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), _("Error in get_list_with_children"))
+        frappe.throw(_("An error occurred while fetching records. Please check the logs for more details."))
 
 @frappe.whitelist()
 def vote(doctype, docname, fieldname, unique_field, values, is_delete):
@@ -647,16 +696,129 @@ def vote(doctype, docname, fieldname, unique_field, values, is_delete):
             if not is_delete:
                 doc.append(fieldname, value)
     
-    doc.save()
-    
-@frappe.whitelist()
-def custom_building_action(building_id,action):
-    user = frappe.session.user
+    doc.save()    
 
-    if frappe.db.exists("Building Member", {"building": building_id, "user": user}):
-        if has_permission("Building", "building_manager", user=user):
-            return {"status": "success", "message": "Action completed with elevated permissions"}
-        else:
-            frappe.throw("You do not have sufficient permissions.")
-    else:
-        frappe.throw("User is not a member of this building.")
+
+@frappe.whitelist()
+def get_unseen_docs(entities):
+    """
+    API to return documents from the specified entities that have not been seen by the current user.
+    """
+    # Step 1: Parse the entities parameter if it's a JSON string.
+    try:
+        entities = json.loads(entities)
+    except json.JSONDecodeError:
+        frappe.throw(_("Invalid parameter: 'entities' should be a JSON string representing an array of strings."))
+
+    if not isinstance(entities, list):
+        frappe.throw(_("Invalid parameter: 'entities' should be a list of strings."))
+
+    # Step 2: Get entities filtered by the provided parameter.
+    entity_docs = frappe.get_all('Entity', filters={'entity': ['in', entities]}, fields=['model', 'filters'])
+    
+    # Step 3: Gather all documents from the doctypes marked as "Track Seen".
+    unseen_docs = []
+    for entity in entity_docs:
+        model_doctype = entity.get('model')
+        filters = frappe.parse_json(entity.get('filters', '{}'))  # Parse filters if available
+
+        if model_doctype and frappe.get_meta(model_doctype).track_seen:
+            # Get list of documents with the provided filters and include the 'doctype' field.
+            docs = frappe.get_list(
+                model_doctype,
+                filters=filters,
+                fields=['doctype', 'name', 'creation', 'modified'],  # Ensure 'doctype' is included
+                order_by='creation asc'
+            )
+            unseen_docs.extend(docs)
+            
+    print(unseen_docs)
+    # Step 4: Filter out docs that have been seen by the current user.
+    current_user = frappe.session.user
+    unseen_docs = [
+        doc for doc in unseen_docs
+        if 'doctype' in doc and not frappe.get_doc(doc['doctype'], doc['name']).is_seen_by(current_user)
+    ]
+
+    return unseen_docs
+
+
+
+@frappe.whitelist()
+def openai_chat():
+    try:
+        # Get the JSON payload from the request
+        data = frappe.local.form_dict
+        
+        # Validate required fields
+        if not data.get('model') or not data.get('user'):
+            frappe.throw(_("Both 'model' and 'user' are required fields."))
+        
+        model = data.get('model')
+        message = data.get('user')
+        # system = data.get('system')
+		
+
+        try:
+            response = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": ""},
+                    {"role": "user", "content": message},
+                ]
+            )
+            #return response.choices[0].message.content
+            frappe.logger("frappe.web").debug(response.choices[0].message.content)
+            return ai_exec(response.choices[0].message.content) 
+        except Exception as e:
+            return f"An error occurred: {e}"
+    except Exception as e:
+        frappe.throw(_("An error occurred: {0}").format(str(e)))
+        
+@frappe.whitelist()
+def openai_chat_simple(data=None):
+    try:
+        # Get the JSON payload from the request
+        if data == None:
+            data = frappe.local.form_dict
+        
+        # Validate required fields
+        if not data.get('model') or not data.get('user'):
+            frappe.throw(_("Both 'model' and 'user' are required fields."))
+        
+        model = data.get('model')
+        message = data.get('user')
+        system = data.get('system')
+
+        try:
+            response = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": message},
+                ]
+            )
+            #return response.choices[0].message.content
+            frappe.logger("frappe.web").debug(response.choices[0].message.content)
+            return response.choices[0].message 
+        except Exception as e:
+            return f"An error occurred: {e}"
+    except Exception as e:
+        frappe.throw(_("An error occurred: {0}").format(str(e)))
+        
+@frappe.whitelist()
+def get_company_user_list(user):
+    profile_context = frappe.get_doc("Profile Context")
+    if frappe.session.user == "Administrator":
+        return ""
+    
+    try:
+        selected_profile = json.loads(frappe.model.utils.user_settings.get(profile_context.profile_doctype))['selectedProfile']
+    except:
+        return ""
+     
+    user_list = [d.user for d in frappe.get_list("User Permission", filters={'allow':'Company','for_value': selected_profile}, fields=['user'], ignore_permissions=True)]
+    if len(user_list) == 0:
+        return f"name = 'Null'"
+ 
+    return f"name in{tuple(user_list)}"

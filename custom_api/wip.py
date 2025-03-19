@@ -1,5 +1,5 @@
 
-def create_employee_attedance()
+def create_employee_attedance():
     employee_list = frappe.get_list("Employee",fields=['name','first_name','last_name','hourly_rate','designation'])
     attendance_data = {}
     for employee in employee_list:

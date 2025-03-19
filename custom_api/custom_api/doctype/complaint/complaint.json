@@ -1,0 +1,41 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-10-27 08:26:30.202325",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "building", "submitted_by", "description", "type", "status"
+ ],
+ "fields":[
+    { "fieldname": "building", "label": "Building", "fieldtype": "Link", "options": "Building" },
+    { "fieldname": "submitted_by", "label": "Submitted By", "fieldtype": "Link", "options": "User" },
+    { "fieldname": "description", "label": "Description", "fieldtype": "Text" },
+    { "fieldname": "type", "label": "Type", "fieldtype": "Select", "options": "Complaint\nSuggestion" },
+    { "fieldname": "status", "label": "Status", "fieldtype": "Select", "options": "New\nIn Progress\nResolved\nClosed" }
+  ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-10-27 08:26:30.202325",
+ "modified_by": "Administrator",
+ "module": "Custom Api",
+ "name": "Complaint",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

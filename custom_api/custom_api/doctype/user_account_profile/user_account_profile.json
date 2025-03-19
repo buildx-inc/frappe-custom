@@ -44,31 +44,46 @@
    "fieldname": "email",
    "fieldtype": "Data",
    "label": "\u0627\u0644\u0628\u0631\u064a\u062f \u0627\u0644\u0627\u0644\u0643\u062a\u0631\u0648\u0646\u064a",
+   "table_modal_fields": "[]",
+   "table_type": "List",
    "translatable": 1,
-   "unique": 1
+   "unique": 1,
+   "upload_privacy": "Private"
   },
   {
    "fieldname": "first_name",
    "fieldtype": "Data",
    "label": "\u0627\u0644\u0627\u0633\u0645 \u0627\u0644\u0623\u0648\u0644",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private",
    "validation": "{\"reqd\" : 1}"
   },
   {
    "fieldname": "last_name",
    "fieldtype": "Data",
    "label": "\u0627\u0633\u0645 \u0627\u0644\u0639\u0627\u0626\u0644\u0629",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private",
    "validation": "{\"reqd\" : 1}"
   },
   {
    "fieldname": "birth_date",
    "fieldtype": "Date",
    "label": "\u062a\u0627\u0631\u064a\u062e \u0627\u0644\u0645\u064a\u0644\u0627\u062f",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private",
    "validation": "{}"
   },
   {
    "fieldname": "city",
    "fieldtype": "Data",
    "label": "\u0627\u0644\u0645\u062f\u064a\u0646\u0629",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private",
    "validation": "{\"reqd\" : 1}"
   },
   {
@@ -78,7 +93,10 @@
    "label": "\u0631\u0642\u0645 \u0627\u0644\u0647\u0648\u064a\u0629",
    "reqd": 1,
    "set_only_once": 1,
+   "table_modal_fields": "[]",
+   "table_type": "List",
    "unique": 1,
+   "upload_privacy": "Private",
    "validation": "{\"reqd\" : 1}"
   },
   {
@@ -86,6 +104,9 @@
    "fieldtype": "Select",
    "label": "\u0627\u0644\u062d\u0627\u0644\u0629 \u0627\u0644\u0627\u062c\u062a\u0645\u0627\u0639\u064a\u0629",
    "options": "\u0645\u062a\u0632\u0648\u062c/\u0629\n\u0645\u0637\u0644\u0642/\u0629\n\u0623\u0631\u0645\u0644/\u0629\n\u0623\u0639\u0632\u0628/ \u0639\u0632\u0628\u0627\u0621\n\u0645\u062a\u0632\u0648\u062c \u0644\u0623\u062e\u0631\u0649",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private",
    "validation": "{\"reqd\" : 1}"
   },
   {
@@ -93,6 +114,9 @@
    "fieldtype": "Select",
    "label": "\u0627\u0644\u062c\u0646\u0633",
    "options": "\nmale\nfemale",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private",
    "validation": "{\"reqd\" : 1}"
   },
   {
@@ -100,43 +124,67 @@
    "delete_label": "\u062d\u0630\u0641 \u0637\u0641\u0644",
    "fieldname": "children",
    "fieldtype": "Table",
-   "options": "Person Entry List"
+   "options": "Person Entry List",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private"
   },
   {
    "fieldname": "partner_first_name",
    "fieldtype": "Data",
-   "label": "\u0627\u0644\u0627\u0633\u0645 \u0627\u0644\u0623\u0648\u0644"
+   "label": "\u0627\u0644\u0627\u0633\u0645 \u0627\u0644\u0623\u0648\u0644",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private"
   },
   {
    "fieldname": "partner_last_name",
    "fieldtype": "Data",
-   "label": "\u0627\u0633\u0645 \u0627\u0644\u0639\u0627\u0626\u0644\u0629"
+   "label": "\u0627\u0633\u0645 \u0627\u0644\u0639\u0627\u0626\u0644\u0629",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private"
   },
   {
    "fieldname": "partner_gender",
    "fieldtype": "Select",
    "label": "\u0627\u0644\u062c\u0646\u0633",
-   "options": "\nmale\nfemale"
+   "options": "\nmale\nfemale",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private"
   },
   {
    "fieldname": "\u0627\u0644\u0623\u0633\u0627\u0633\u064a\u0627\u062a",
    "fieldtype": "Heading",
-   "label": "\u0627\u0644\u0623\u0633\u0627\u0633\u064a\u0627\u062a"
+   "label": "\u0627\u0644\u0623\u0633\u0627\u0633\u064a\u0627\u062a",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private"
   },
   {
    "fieldname": "\u0627\u0644\u0627\u062a\u0635\u0627\u0644_\u0648\u0627\u0644\u0645\u0639\u0644\u0648\u0645\u0627\u062a",
    "fieldtype": "Heading",
-   "label": "\u0627\u0644\u0627\u062a\u0635\u0627\u0644 \u0648\u0627\u0644\u0645\u0639\u0644\u0648\u0645\u0627\u062a"
+   "label": "\u0627\u0644\u0627\u062a\u0635\u0627\u0644 \u0648\u0627\u0644\u0645\u0639\u0644\u0648\u0645\u0627\u062a",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private"
   },
   {
    "fieldname": "partner_id_number",
    "fieldtype": "Data",
-   "label": "\u0631\u0642\u0645 \u0627\u0644\u0647\u0648\u064a\u0629"
+   "label": "\u0631\u0642\u0645 \u0627\u0644\u0647\u0648\u064a\u0629",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private"
   },
   {
    "fieldname": "\u0627\u0644\u0623\u0637\u0641\u0627\u0644",
    "fieldtype": "Heading",
-   "label": "\u0627\u0644\u0623\u0637\u0641\u0627\u0644"
+   "label": "\u0627\u0644\u0623\u0637\u0641\u0627\u0644",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private"
   },
   {
    "fieldname": "mobile",
@@ -146,20 +194,29 @@
    "options": "phone",
    "reqd": 1,
    "set_only_once": 1,
+   "table_modal_fields": "[]",
+   "table_type": "List",
    "unique": 1,
+   "upload_privacy": "Private",
    "validation": "{\"reqd\" : 1}"
   },
   {
    "fieldname": "land_line",
    "fieldtype": "Data",
    "label": "\u0647\u0627\u062a\u0641 \u0623\u0631\u0636\u064a",
-   "options": "phone"
+   "options": "phone",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private"
   },
   {
    "default": "0",
    "fieldname": "is_disabled",
    "fieldtype": "Check",
-   "label": "\u0645\u0646 \u0630\u0648\u064a \u0627\u0644\u0625\u0639\u0627\u0642\u0629/\u0627\u062d\u062a\u064a\u0627\u062c\u0627\u062a \u062e\u0627\u0635\u0629"
+   "label": "\u0645\u0646 \u0630\u0648\u064a \u0627\u0644\u0625\u0639\u0627\u0642\u0629/\u0627\u062d\u062a\u064a\u0627\u062c\u0627\u062a \u062e\u0627\u0635\u0629",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private"
   },
   {
    "fieldname": "id_type",
@@ -169,6 +226,9 @@
    "options": "\n\u0647\u0648\u064a\u0629 \u0642\u062f\u0633\n\u0647\u0648\u064a\u0629 \u0636\u0641\u0629 \u063a\u0631\u0628\u064a\u0629\n\u0647\u0648\u064a\u0629 \u0642\u0637\u0627\u0639 \u063a\u0632\u0629\n\u0647\u0648\u064a\u0629 48\n\u063a\u064a\u0631 \u0630\u0644\u0643",
    "reqd": 1,
    "set_only_once": 1,
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private",
    "validation": "{\"reqd\" : 1}"
   },
   {
@@ -176,35 +236,53 @@
    "fieldname": "id_type_other",
    "fieldtype": "Data",
    "label": "\u0627\u0644\u062c\u0646\u0633\u064a\u0629",
-   "set_only_once": 1
+   "set_only_once": 1,
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private"
   },
   {
    "fieldname": "parent_name",
    "fieldtype": "Data",
    "label": "\u0627\u0633\u0645 \u0627\u0644\u0627\u0628",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private",
    "validation": "{}"
   },
   {
    "fieldname": "grandfather_name",
    "fieldtype": "Data",
    "label": "\u0627\u0633\u0645 \u0627\u0644\u062c\u062f",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private",
    "validation": "{}"
   },
   {
    "fieldname": "partner_sec",
    "fieldtype": "Heading",
-   "label": "\u0627\u0644\u0632\u0648\u062c/\u0627\u0644\u0632\u0648\u062c\u0629"
+   "label": "\u0627\u0644\u0632\u0648\u062c/\u0627\u0644\u0632\u0648\u062c\u0629",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private"
   },
   {
    "fieldname": "partner_parent_name",
    "fieldtype": "Data",
    "label": "\u0627\u0633\u0645 \u0627\u0644\u0627\u0628",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private",
    "validation": "{}"
   },
   {
    "fieldname": "partner_grandfather_name",
    "fieldtype": "Data",
    "label": "\u0627\u0633\u0645 \u0627\u0644\u062c\u062f",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private",
    "validation": "{}"
   },
   {
@@ -214,6 +292,9 @@
    "label": "\u0646\u0648\u0639 \u0627\u0644\u0647\u0648\u064a\u0629",
    "options": "\n\u0647\u0648\u064a\u0629 \u0642\u062f\u0633\n\u0647\u0648\u064a\u0629 \u0636\u0641\u0629 \u063a\u0631\u0628\u064a\u0629\n\u0647\u0648\u064a\u0629 \u0642\u0637\u0627\u0639 \u063a\u0632\u0629\n\u0647\u0648\u064a\u0629 48\n\u063a\u064a\u0631 \u0630\u0644\u0643",
    "set_only_once": 1,
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private",
    "validation": "{\"reqd\" : 1}"
   },
   {
@@ -221,13 +302,19 @@
    "fieldname": "\u0627\u0644\u062c\u0646\u0633\u064a\u0629",
    "fieldtype": "Data",
    "label": "\u0627\u0644\u062c\u0646\u0633\u064a\u0629",
-   "set_only_once": 1
+   "set_only_once": 1,
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private"
   },
   {
    "fieldname": "full_name",
    "fieldtype": "Read Only",
    "hidden": 1,
    "label": "Full Name",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private",
    "validation": "{\"reqd\" : 1}"
   },
   {
@@ -235,6 +322,9 @@
    "fieldtype": "Read Only",
    "hidden": 1,
    "label": "Short Name",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private",
    "validation": "{\"reqd\" : 1}"
   },
   {
@@ -242,6 +332,9 @@
    "fieldtype": "Read Only",
    "hidden": 1,
    "label": "Partner Full Name",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private",
    "validation": "{\"reqd\" : 1}"
   },
   {
@@ -249,12 +342,15 @@
    "fieldtype": "Read Only",
    "hidden": 1,
    "label": "Partner Short Name",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private",
    "validation": "{\"reqd\" : 1}"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-11-03 09:05:55.412664",
+ "modified": "2024-12-09 11:10:04.493864",
  "modified_by": "Administrator",
  "module": "Custom Api",
  "name": "User Account Profile",
