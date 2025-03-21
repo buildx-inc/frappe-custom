@@ -745,7 +745,8 @@ def get_unseen_docs(entities):
 
 
 @frappe.whitelist()
-def openai_chat():
+def openai_chat(return_response=False):
+    ai_exec = frappe.get_attr('ui_builder.api.ai_exec')
     try:
         # Get the JSON payload from the request
         data = frappe.local.form_dict
@@ -767,8 +768,9 @@ def openai_chat():
                     {"role": "user", "content": message},
                 ]
             )
-            #return response.choices[0].message.content
-            frappe.logger("frappe.web").debug(response.choices[0].message.content)
+            frappe.logger("frappe.web").debug(response.choices[0].message)
+            if return_response:
+                return response.choices[0].message.content
             return ai_exec(response.choices[0].message.content) 
         except Exception as e:
             return f"An error occurred: {e}"
@@ -809,9 +811,6 @@ def openai_chat_simple(data=None):
 @frappe.whitelist()
 def get_company_user_list(user):
     profile_context = frappe.get_doc("Profile Context")
-    if frappe.session.user == "Administrator":
-        return ""
-    
     try:
         selected_profile = json.loads(frappe.model.utils.user_settings.get(profile_context.profile_doctype))['selectedProfile']
     except:
@@ -820,5 +819,66 @@ def get_company_user_list(user):
     user_list = [d.user for d in frappe.get_list("User Permission", filters={'allow':'Company','for_value': selected_profile}, fields=['user'], ignore_permissions=True)]
     if len(user_list) == 0:
         return f"name = 'Null'"
+    
+    filter_string = f"name in{tuple(user_list)}".replace(',)', ')')
  
-    return f"name in{tuple(user_list)}"
+    return filter_string
+
+
+@frappe.whitelist()
+def ai_wrapper_test(template, **kwargs):
+	site_settings = frappe.get_doc("Site Settings")
+	log_doc = frappe.new_doc("OpenAi Prompt Log")
+	log_doc.prompt_name = template
+	log_doc.variables = json.dumps(kwargs)
+	
+	template_doc = frappe.get_doc("OpenAI Prompt Template", template)
+	base_prompt = template_doc.base_prompt
+	for variable in template_doc.variables:
+		placeholder = '{' + variable.variable_name + '}'
+		if variable.variable_name in kwargs:
+			if variable.fieldtype == 'JSON':
+				kwargs[variable.variable_name] = json.dumps(kwargs[variable.variable_name])
+			base_prompt = base_prompt.replace(placeholder, kwargs[variable.variable_name])
+		else:
+			if variable.default_value is not None:
+				base_prompt = base_prompt.replace(placeholder, variable.default_value)
+	
+	chat_result = openai_chat_simple(data={'model': site_settings.default_model, 'system': '', 'user': base_prompt})
+	log_doc.openai_response = chat_result
+	
+	ai_exec = frappe.get_attr('ui_builder.api.ai_exec')
+	execution_result = ai_exec(chat_result)   
+	log_doc.api_response = execution_result 
+	
+	log_doc.save()
+
+
+  
+@frappe.whitelist(allow_guest=True)
+def fetch_users():
+    profile_context = frappe.get_doc("Profile Context")
+    try:
+        selected_profile = json.loads(frappe.model.utils.user_settings.get(profile_context.profile_doctype))['selectedProfile']
+    except:
+        return frappe.db.get_all("User",fields='*')
+    
+    additional_context = profile_context.profile_members_doctype
+    context_doctype = frappe.get_doc("DocType", additional_context, ignore_permissions=True)
+    filter_field = None
+    for field in context_doctype.fields:
+        if field.options == profile_context.profile_doctype:
+            filter_field = field.fieldname
+    
+    if filter_field == None:
+        return frappe.db.get_all("User",fields='*')
+        
+    user_data = []
+    user_list = frappe.get_list("User", fields='*', ignore_permissions=True)
+    for user in user_list:
+        additional_context_data = frappe.db.get_all(additional_context, filters={'user': user.name, filter_field: selected_profile},fields='*',limit=1)
+        if len(additional_context_data) > 0:
+            user_data.append(additional_context_data[0].update(user))
+       
+    return user_data    
+    
