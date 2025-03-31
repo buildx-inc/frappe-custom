@@ -28,13 +28,6 @@ from frappe.core.doctype.sms_settings.sms_settings import send_via_gateway
 from io import BytesIO
 import random
 
-from openai import OpenAI
-
-site_settings = frappe.get_doc("Site Settings")
-if site_settings.openai_key != None:
-	client = OpenAI(
-		api_key=site_settings.openai_key
-	)
 
 @frappe.whitelist()
 def current_site():
@@ -746,6 +739,14 @@ def get_unseen_docs(entities):
 
 @frappe.whitelist()
 def openai_chat(return_response=False):
+    from openai import OpenAI
+    site_settings = frappe.get_doc("Site Settings")
+
+    if site_settings.openai_key != None:
+        client = OpenAI(
+			api_key=site_settings.openai_key
+		)
+
     ai_exec = frappe.get_attr('ui_builder.api.ai_exec')
     try:
         # Get the JSON payload from the request
@@ -779,6 +780,13 @@ def openai_chat(return_response=False):
         
 @frappe.whitelist()
 def openai_chat_simple(data=None):
+    from openai import OpenAI
+    site_settings = frappe.get_doc("Site Settings")
+
+    if site_settings.openai_key != None:
+        client = OpenAI(
+			api_key=site_settings.openai_key
+		)
     try:
         # Get the JSON payload from the request
         if data == None:
