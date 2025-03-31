@@ -815,7 +815,10 @@ def get_company_user_list(user):
         selected_profile = json.loads(frappe.model.utils.user_settings.get(profile_context.profile_doctype))['selectedProfile']
     except:
         return ""
-     
+    
+    if frappe.session.user == "Administrator":
+        return ""
+    
     user_list = [d.user for d in frappe.get_list("User Permission", filters={'allow':'Company','for_value': selected_profile}, fields=['user'], ignore_permissions=True)]
     if len(user_list) == 0:
         return f"name = 'Null'"
