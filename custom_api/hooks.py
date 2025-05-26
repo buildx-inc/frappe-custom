@@ -12,6 +12,18 @@ app_license = "MIT"
 doc_events = {
     "Attendance": {
         "on_create": "custom_api.api.update_employee_timesheet_on_attendance_creation",
+    },
+    "Lead": {
+        "before_insert": "custom_api.api.validate_lead"
+    },
+    "Item": {
+        "before_insert": "custom_api.api.item_before_insert"
+    },
+    "Website Item":{
+        "before_insert": "custom_api.api.website_item_before_insert"
+    },
+    "Sales Invoice":{
+        "before_insert": "custom_api.api.sales_invoice_before_insert"
     }
 }
 

@@ -107,6 +107,10 @@ def dev():
 		return 0
 
 
+def validate_lead(doc, method=None):
+    if "Binance" in doc.company_name:
+        frappe.throw("Invalid Request")
+        
 @frappe.whitelist()
 def send_email(emails, subject, content, attachments=None, cc=None):
 	# Convert the JSON string to a Python list
@@ -893,3 +897,43 @@ def fetch_users():
        
     return user_data    
     
+    
+def item_before_insert(doc, method):
+    if doc.variant_of:
+        parent_item = frappe.get_doc("Item", doc.variant_of)
+        doc.valuation_rate = parent_item.valuation_rate
+        doc.standard_rate = parent_item.standard_rate
+        doc.image = parent_item.image
+        doc.warehouse_sections = parent_item.warehouse_sections
+        
+def website_item_before_insert(doc, method):
+    parent_item = frappe.get_doc('Item', doc.item_code)
+    doc.image = parent_item.image
+    
+def sales_invoice_before_insert(doc,method=None):
+    total = doc.total
+    doc.base_total = total
+    doc.base_net_total = total
+    doc.net_total = total
+    doc.base_grand_total = total
+    doc.base_rounded_total = total
+    doc.grand_total = total
+    doc.rounded_total = total
+    # doc.outstanding_amount = total
+    doc.amount_eligible_for_commission = total
+    doc.is_return = int(doc.is_return)
+    doc.is_pos = int(doc.is_pos)
+    doc.is_consolidated = int(doc.is_consolidated)
+    for item in doc.items:
+        rate = item.rate
+        amount = item.amount
+        item.price_list_rate = rate
+        item.base_price_list_rate = rate
+        item.base_rate = rate
+        item.stock_uom_rate = rate
+        item.net_rate = rate
+        item.base_net_rate = rate
+        item.base_amount = amount
+        item.net_amount = amount
+        item.base_net_amount = amount
+        

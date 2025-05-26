@@ -26,7 +26,9 @@
   {
    "fieldname": "question",
    "fieldtype": "Text Editor",
+   "in_list_view": 1,
    "label": "Poll Question",
+   "reqd": 1,
    "table_modal_fields": "[]",
    "table_type": "List",
    "upload_privacy": "Private"
@@ -37,6 +39,7 @@
    "fieldtype": "Table",
    "label": "Options",
    "options": "Poll Option",
+   "reqd": 1,
    "table_modal_fields": "[\"option_text\"]",
    "table_type": "Tags",
    "tags_text_field": "option_text",
@@ -72,7 +75,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-02-19 12:24:33.673107",
+ "modified": "2025-04-03 16:14:51.050896",
  "modified_by": "Administrator",
  "module": "Custom Api",
  "name": "Poll",
