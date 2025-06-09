@@ -675,6 +675,171 @@ def get_list_with_children(doctype, filters=None, fields=None, order_by="modifie
         frappe.throw(_("An error occurred while fetching records. Please check the logs for more details."))
 
 @frappe.whitelist()
+def get_multiple_lists_with_children(doctypes):
+    """
+    Fetch multiple lists of documents with their children in a single API call.
+
+    Args:
+        doctypes (list): Array of objects, each containing:
+            - doctype (str): The DocType to query
+            - entity (str, optional): Key name to use in response dict (defaults to doctype)
+            - filters (dict or list, optional): Filters to apply
+            - fields (list, optional): List of fields to fetch
+            - order_by (str, optional): Order by clause
+
+    Returns:
+        dict: Dictionary with entity (or doctype) as key and list of documents as value,
+              plus an "assignees" key containing unique set of all assignees
+    """
+    try:
+        # Ensure doctypes is properly deserialized
+        if isinstance(doctypes, str):
+            import json
+            doctypes = json.loads(doctypes)
+        
+        if not isinstance(doctypes, list):
+            frappe.throw(_("doctypes parameter must be a list/array"))
+        
+        result = {}
+        all_assignees = set()  # Use set to automatically handle uniqueness
+        
+        for query in doctypes:
+            if not isinstance(query, dict):
+                frappe.throw(_("Each query must be an object/dictionary"))
+            
+            doctype = query.get('doctype')
+            if not doctype:
+                frappe.throw(_("doctype is required for each query"))
+            
+            # Use entity as key if provided, otherwise fall back to doctype
+            result_key = query.get('entity', doctype)
+            
+            filters = query.get('filters') or {}
+            fields = query.get('fields') or ["name"]
+            order_by = query.get('order_by') or "modified desc"
+            
+            # Ensure _assign field is included in fields if not already present
+            if isinstance(fields, list) and "_assign" not in fields:
+                fields = fields + ["_assign"]
+            
+            # Ensure filters is properly deserialized if it's a string
+            if isinstance(filters, str):
+                filters = json.loads(filters)
+            
+            # Handle _assign field filtering - convert to LIKE pattern
+            if isinstance(filters, list):
+                processed_filters = []
+                for filter_item in filters:
+                    if isinstance(filter_item, list) and len(filter_item) >= 3:
+                        field, operator, value = filter_item[0], filter_item[1], filter_item[2]
+                        if field == "_assign" and operator == "=":
+                            # Convert _assign equality filter to LIKE pattern
+                            processed_filters.append([field, "like", f"%{value}%"])
+                        else:
+                            processed_filters.append(filter_item)
+                    else:
+                        processed_filters.append(filter_item)
+                filters = processed_filters
+            elif isinstance(filters, dict):
+                processed_filters = {}
+                for field, value in filters.items():
+                    if field == "_assign":
+                        # Convert _assign equality filter to LIKE pattern
+                        if isinstance(value, list) and len(value) >= 2 and value[0] == "=":
+                            processed_filters[field] = ("like", f"%{value[1]}%")
+                        else:
+                            processed_filters[field] = ("like", f"%{value}%")
+                    else:
+                        processed_filters[field] = value
+                filters = processed_filters
+            
+            # Fetch the documents for this doctype
+            doc_names = frappe.get_list(doctype, filters=filters, fields=fields, order_by=order_by)
+            
+            # Retrieve full documents for the fetched names and ensure _assign is included
+            documents = []
+            for doc_data in doc_names:
+                doc = frappe.get_doc(doctype, doc_data["name"])
+                
+                # Check if _assign field exists in the table
+                try:
+                    table_columns = frappe.db.get_table_columns(doctype)
+                    has_assign_field = "_assign" in table_columns
+                    frappe.logger().info(f"Table {doctype} has _assign field: {has_assign_field}")
+                    frappe.logger().info(f"Table columns: {table_columns}")
+                except Exception as e:
+                    frappe.logger().info(f"Error checking table structure: {e}")
+                    has_assign_field = False
+                
+                # Get _assign field directly from database to ensure it's included
+                assign_value = None
+                if has_assign_field:
+                    try:
+                        assign_value = frappe.db.get_value(doctype, doc_data["name"], "_assign")
+                        frappe.logger().info(f"_assign value for {doc_data['name']}: {assign_value}")
+                    except Exception as e:
+                        frappe.logger().info(f"Error getting _assign value: {e}")
+                
+                # Also check if there are any ToDo records for this document (standard assignment approach)
+                todo_assignments = frappe.get_all(
+                    "ToDo",
+                    filters={
+                        "reference_type": doctype,
+                        "reference_name": doc_data["name"],
+                        "status": ("not in", ("Cancelled", "Closed")),
+                        "allocated_to": ("is", "set"),
+                    },
+                    fields=["allocated_to"]
+                )
+                
+                if assign_value:
+                    try:
+                        # Parse _assign if it's a JSON string
+                        if isinstance(assign_value, str):
+                            parsed_assign = json.loads(assign_value)
+                        else:
+                            parsed_assign = assign_value
+                    except (json.JSONDecodeError, TypeError):
+                        # If parsing fails, keep original value
+                        parsed_assign = assign_value
+                elif todo_assignments:
+                    # Use ToDo assignments if _assign field is empty
+                    parsed_assign = [todo.allocated_to for todo in todo_assignments]
+                    frappe.logger().info(f"Using ToDo assignments for {doc_data['name']}: {parsed_assign}")
+                else:
+                    # If _assign field is empty/None, set it to empty list
+                    parsed_assign = []
+                
+                # Add assignees to the global set
+                if isinstance(parsed_assign, list):
+                    for assignee in parsed_assign:
+                        if assignee:  # Only add non-empty assignees
+                            all_assignees.add(assignee)
+                elif parsed_assign:  # Single assignee
+                    all_assignees.add(parsed_assign)
+                
+                # Convert document to dictionary to ensure all fields are serialized
+                doc_dict = doc.as_dict()
+                
+                # Explicitly add _assign field to the dictionary
+                doc_dict['_assign'] = parsed_assign
+                frappe.logger().info(f"Final _assign value in response: {parsed_assign}")
+                
+                documents.append(doc_dict)
+            
+            # Store in result dictionary using entity key
+            result[result_key] = documents
+        
+        # Add unique assignees to the result
+        result["assignees"] = sorted(list(all_assignees))  # Convert set to sorted list
+        
+        return result
+        
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), _("Error in get_multiple_lists_with_children"))
+        frappe.throw(_("An error occurred while fetching records. Please check the logs for more details."))
+
+@frappe.whitelist()
 def vote(doctype, docname, fieldname, unique_field, values, is_delete):
     doc = frappe.get_doc(doctype, docname)
     
