@@ -22,9 +22,9 @@ doc_events = {
     "Website Item":{
         "before_insert": "custom_api.api.website_item_before_insert"
     },
-    "Sales Invoice":{
-        "before_insert": "custom_api.api.sales_invoice_before_insert"
-    }
+    # "Sales Invoice":{
+    #     "before_insert": "custom_api.api.sales_invoice_before_insert"
+    # }
 }
 
 scheduler_events = {

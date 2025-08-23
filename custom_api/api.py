@@ -27,6 +27,9 @@ from werkzeug.wrappers import Response
 from frappe.core.doctype.sms_settings.sms_settings import send_via_gateway
 from io import BytesIO
 import random
+from openpyxl import load_workbook
+from erpnext.controllers.item_variant import create_variant
+import math
 
 
 @frappe.whitelist()
@@ -272,161 +275,364 @@ def log(message, logging_enabled = True):
 
 
 def create_employee_attendance():
-	employee_list = frappe.get_list("Employee",fields=['name','first_name','last_name','hourly_rate','designation'])
-	attendance_data = {}
-	for employee in employee_list:
-		employee_fullname = employee.first_name
-		if employee.last_name != '' and employee.last_name != None:
-			employee_fullname = employee_fullname + " " + employee.last_name
+	"""
+	Process employee attendance with bulk data fetching and improved error handling.
+	"""
+	try:
+		print("🔄 Starting employee attendance processing...")
+		
+		# Fetch all data upfront to avoid N+1 queries
+		print("📥 Fetching employee data and unlinked checkins...")
+		employees = frappe.get_list("Employee", fields=['name', 'first_name', 'last_name', 'employee_name'])
+		
+		if not employees:
+			print("❌ No employees found in the system")
+			return
+		
+		# Get company name once
+		company = frappe.get_list("Company", limit=1)
+		company_name = company[0].name if company else None
+		
+		# Fetch all unlinked checkins for all employees in one query
+		employee_names = [emp.name for emp in employees]
+		all_checkins = frappe.get_list(
+			"Employee Checkin",
+			filters={'employee': ['in', employee_names], 'attendance': ['=', '']},
+			fields=['name', 'time', 'log_type', 'employee'],
+			order_by='employee, time asc'
+		)
+		
+		# Group checkins by employee
+		checkins_by_employee = {}
+		for checkin in all_checkins:
+			if checkin.employee not in checkins_by_employee:
+				checkins_by_employee[checkin.employee] = []
+			checkins_by_employee[checkin.employee].append(checkin)
+		
+		print(f"👥 Found {len(employees)} employees")
+		print(f"🔗 Found {len(all_checkins)} unlinked checkins")
+		print(f"📊 {len(checkins_by_employee)} employees have unlinked checkins")
+		print(f"🏢 Company: {company_name}")
+		print("-" * 60)
+		
+		# Process each employee's attendance
+		processed_count = 0
+		total_issues = 0
+		
+		for employee in employees:
+			employee_name = _build_employee_name(employee)
+			employee_checkins = checkins_by_employee.get(employee.name, [])
 			
-		checkin_stack = []
-		filters = {'employee': employee.name}
-		filters['attendance'] = ['=','']
+			if not employee_checkins:
+				print(f"⏭️  {employee_name}: No unlinked checkins found")
+				continue
+				
+			print(f"\n👤 Processing: {employee_name} ({len(employee_checkins)} checkins)")
+			
+			# Process this employee's checkins with improved logic
+			created_records, employee_issues = _process_employee_attendance(
+				employee, employee_checkins, company_name
+			)
+			processed_count += created_records
+			total_issues += employee_issues
+			
+		print("\n" + "=" * 60)
+		print(f"✅ Processing completed!")
+		print(f"📈 Total attendance records created: {processed_count}")
+		print(f"⚠️  Total issues found: {total_issues}")
 		
-		attendance_data[employee_fullname] = {}
-		checkin_list = frappe.get_list(doctype="Employee Checkin",filters=filters,fields=['name', 'time', 'log_type', 'employee'], order_by='time asc')
-		attendance_data[employee_fullname]['attendance'] = {}
-		attendance_data[employee_fullname]['working_hours'] = 0
-		attendance_data[employee_fullname]['break_hours'] = 0
-		attendance_data[employee_fullname]['status'] = "Off"
-		
-		for checkin in checkin_list:
-			checkin_day = (checkin.time - timedelta(hours=5)).strftime('%Y/%m/%d')
+	except Exception as e:
+		print(f"💥 Critical error in attendance processing: {str(e)}")
+		frappe.log_error("Attendance Processing", f"Error in create_employee_attendance: {str(e)}")
+		raise
 
-			if str(checkin_day) not in attendance_data[employee_fullname]['attendance'].keys():
-				if checkin.log_type == 'IN':
-					attendance_data[employee_fullname]['attendance'][str(checkin_day)] = {}
-					attendance_data[employee_fullname]['attendance'][str(checkin_day)]['check_in'] = None
-					attendance_data[employee_fullname]['attendance'][str(checkin_day)]['check_out'] = None
-					attendance_data[employee_fullname]['attendance'][str(checkin_day)]['breaks'] = []
-					attendance_data[employee_fullname]['attendance'][str(checkin_day)]['break_log'] = []
-					attendance_data[employee_fullname]['attendance'][str(checkin_day)]['issues'] = []
+
+def _build_employee_name(employee):
+	"""Build employee full name from first and last name."""
+	fullname = employee.first_name or ""
+	if employee.last_name and employee.last_name.strip():
+		fullname += " " + employee.last_name
+	return fullname
+
+
+def _get_checkin_day(checkin_time):
+	"""Get the checkin day adjusted for timezone (UTC-5)."""
+	return (checkin_time - timedelta(hours=5)).strftime('%Y/%m/%d')
+
+
+def _format_timestamp(dt):
+	"""Format timestamp for error messages."""
+	return dt.strftime("%d/%m/%Y, %H:%M:%S")
+
+
+def _process_employee_attendance(employee, checkins, company_name):
+	"""
+	Process all checkins for a single employee and create attendance records.
+	Returns: (created_count, issues_count)
+	"""
+	# Count checkin types for verbose output
+	checkin_types = {}
+	for checkin in checkins:
+		checkin_types[checkin.log_type] = checkin_types.get(checkin.log_type, 0) + 1
+	
+	print(f"      📋 Checkin types: {', '.join([f'{k}({v})' for k, v in checkin_types.items()])}")
+	
+	# Initialize attendance tracking
+	attendance_data = {}
+	checkin_stack = []
+	issues_count = 0
+	
+	# Process each checkin (simplified from original logic)
+	for checkin in checkins:
+		checkin_day = _get_checkin_day(checkin.time)
+		
+		# Initialize day structure if needed
+		if checkin_day not in attendance_data:
 			if checkin.log_type == 'IN':
-				if attendance_data[employee_fullname]['attendance'][str(checkin_day)]['check_in'] != None:
-					attendance_data[employee_fullname]['attendance'][str(checkin_day)]['issues'].append(checkin.time.strftime("%d/%m/%Y, %H:%M:%S") + " - Double Check-IN same day")
-				attendance_data[employee_fullname]['attendance'][str(checkin_day)]['check_in'] = checkin
-				attendance_data[employee_fullname]['status'] = "Working"
+				attendance_data[checkin_day] = {
+					'check_in': None, 'check_out': None, 'breaks': [], 'break_log': [], 'issues': []
+				}
+		
+		# Process based on log type (original logic simplified)
+		if checkin.log_type == 'IN':
+			if checkin_day in attendance_data and attendance_data[checkin_day]['check_in'] is not None:
+				attendance_data[checkin_day]['issues'].append(f"{_format_timestamp(checkin.time)} - Double Check-IN same day")
+				issues_count += 1
+			elif checkin_day in attendance_data:
+				attendance_data[checkin_day]['check_in'] = checkin
 				checkin_stack.append(checkin)
-			elif checkin.log_type == 'OUT':
-				attendance_data[employee_fullname]['status'] = "Off"
-				if len(checkin_stack) == 0:
-					attendance_data[employee_fullname]['attendance'][str(checkin_day)] = {}
-					attendance_data[employee_fullname]['attendance'][str(checkin_day)]['check_in'] = None
-					attendance_data[employee_fullname]['attendance'][str(checkin_day)]['check_out'] = None
-					attendance_data[employee_fullname]['attendance'][str(checkin_day)]['breaks'] = []
-					attendance_data[employee_fullname]['attendance'][str(checkin_day)]['break_log'] = []
-					attendance_data[employee_fullname]['attendance'][str(checkin_day)]['issues'] = []
-					attendance_data[employee_fullname]['attendance'][str(checkin_day)]['issues'].append(checkin.time.strftime("%d/%m/%Y, %H:%M:%S") + " - Check-out without check-in")
-				else:
-					clock_in = checkin_stack.pop()
-					clockin_day = (clock_in.time - timedelta(hours=5)).strftime('%Y/%m/%d') 
-					 
-					if ((checkin.time - timedelta(hours=5)).day - (clock_in.time - timedelta(hours=5)).day) > 1:
-						attendance_data[employee_fullname]['attendance'][str(clockin_day)]['issues'].append(clock_in.time.strftime("%d/%m/%Y, %H:%M:%S") + " - Employee checked in for more than 2 days")	
-					else: #shift carry over till the next day					
-						attendance_data[employee_fullname]['attendance'][str(clockin_day)]['check_out'] = checkin	
-					while len(checkin_stack) > 0:
-						clock_in = checkin_stack.pop()
-						attendance_data[employee_fullname]['attendance'][str(clockin_day)]['issues'].append(clock_in.time.strftime("%d/%m/%Y, %H:%M:%S") + " - Checkin without checkout")
-			elif checkin.log_type == 'Break-OUT':
-				if str(checkin_day) not in attendance_data[employee_fullname]['attendance'].keys():
-					if len(checkin_stack) != 0:
-						checkin_day = (checkin_stack[-1].time - timedelta(hours=5)).strftime('%Y/%m/%d')
-						attendance_data[employee_fullname]['attendance'][str(checkin_day)]['breaks'].append(checkin)
-						attendance_data[employee_fullname]['status'] = "On Break"
-					else:
-						attendance_data[employee_fullname]['attendance'][str(checkin_day)] = {}
-						attendance_data[employee_fullname]['attendance'][str(checkin_day)]['check_in'] = None
-						attendance_data[employee_fullname]['attendance'][str(checkin_day)]['check_out'] = None
-						attendance_data[employee_fullname]['attendance'][str(checkin_day)]['breaks'] = []
-						attendance_data[employee_fullname]['attendance'][str(checkin_day)]['break_log'] = []
-						attendance_data[employee_fullname]['attendance'][str(checkin_day)]['issues'] = []
-						attendance_data[employee_fullname]['attendance'][str(checkin_day)]['issues'].append(checkin.time.strftime("%d/%m/%Y, %H:%M:%S") + " - Break-out without check-in")
-				else:
-					attendance_data[employee_fullname]['attendance'][str(checkin_day)]['breaks'].append(checkin)
-					attendance_data[employee_fullname]['status'] = "On Break"
-			elif checkin.log_type == 'Break-IN':
-				if str(checkin_day) not in attendance_data[employee_fullname]['attendance'].keys():
-					if len(checkin_stack) != 0:
-						checkin_day = (checkin_stack[-1].time - timedelta(hours=5)).strftime('%Y/%m/%d')
-						if len(attendance_data[employee_fullname]['attendance'][str(checkin_day)]['breaks']) != 0:
-							attendance_data[employee_fullname]['status'] = "Working"
-							attendance_data[employee_fullname]['attendance'][str(checkin_day)]['break_log'].append({'out':attendance_data[employee_fullname]['attendance'][str(checkin_day)]['breaks'][0], 'in':checkin})
-							del attendance_data[employee_fullname]['attendance'][str(checkin_day)]['breaks'][0]
-						else:
-							attendance_data[employee_fullname]['attendance'][str(checkin_day)]['issues'].append(checkin.time.strftime("%d/%m/%Y, %H:%M:%S") + " - Break in before break out")
-					else:
-						attendance_data[employee_fullname]['attendance'][str(checkin_day)] = {}
-						attendance_data[employee_fullname]['attendance'][str(checkin_day)]['check_in'] = None
-						attendance_data[employee_fullname]['attendance'][str(checkin_day)]['check_out'] = None
-						attendance_data[employee_fullname]['attendance'][str(checkin_day)]['breaks'] = []
-						attendance_data[employee_fullname]['attendance'][str(checkin_day)]['break_log'] = []
-						attendance_data[employee_fullname]['attendance'][str(checkin_day)]['issues'] = []
-						attendance_data[employee_fullname]['attendance'][str(checkin_day)]['issues'].append(checkin.time.strftime("%d/%m/%Y, %H:%M:%S") + " - Break-in without check-in")
-   
-				else:
-					if len(attendance_data[employee_fullname]['attendance'][str(checkin_day)]['breaks']) != 0:
-						attendance_data[employee_fullname]['status'] = "Working"
-						attendance_data[employee_fullname]['attendance'][str(checkin_day)]['break_log'].append({'out':attendance_data[employee_fullname]['attendance'][str(checkin_day)]['breaks'][0], 'in':checkin})
-						del attendance_data[employee_fullname]['attendance'][str(checkin_day)]['breaks'][0]
-					else:
-						attendance_data[employee_fullname]['attendance'][str(checkin_day)]['issues'].append(checkin.time.strftime("%d/%m/%Y, %H:%M:%S") + " - Break in before break out")
+			
+		elif checkin.log_type == 'OUT':
+			if not checkin_stack:
+				# Check-out without check-in
+				if checkin_day not in attendance_data:
+					attendance_data[checkin_day] = {'check_in': None, 'check_out': None, 'breaks': [], 'break_log': [], 'issues': []}
+				attendance_data[checkin_day]['issues'].append(f"{_format_timestamp(checkin.time)} - Check-out without check-in")
+				issues_count += 1
 			else:
-				attendance_data[employee_fullname]['attendance'][str(checkin_day)]['issues'].append(checkin.time.strftime("%d/%m/%Y, %H:%M:%S") + " - Unknown checkin type")
+				clock_in = checkin_stack.pop()
+				clockin_day = _get_checkin_day(clock_in.time)
+				
+				# Check if shift spans more than 2 days
+				day_diff = (checkin.time - timedelta(hours=5)).day - (clock_in.time - timedelta(hours=5)).day
+				if day_diff > 1:
+					attendance_data[clockin_day]['issues'].append(f"{_format_timestamp(clock_in.time)} - Employee checked in for more than 2 days")
+					issues_count += 1
+				else:
+					attendance_data[clockin_day]['check_out'] = checkin
+				
+				# FIXED: Handle unclosed check-ins - assign to their correct days
+				while checkin_stack:
+					unclosed_checkin = checkin_stack.pop()
+					unclosed_day = _get_checkin_day(unclosed_checkin.time)
+					
+					if unclosed_day not in attendance_data:
+						attendance_data[unclosed_day] = {'check_in': None, 'check_out': None, 'breaks': [], 'break_log': [], 'issues': []}
+					
+					attendance_data[unclosed_day]['issues'].append(f"{_format_timestamp(unclosed_checkin.time)} - Checkin without checkout")
+					issues_count += 1
+			
+		elif checkin.log_type == 'Break-OUT':
+			if checkin_day not in attendance_data:
+				if checkin_stack:
+					checkin_day = _get_checkin_day(checkin_stack[-1].time)
+					attendance_data[checkin_day]['breaks'].append(checkin)
+				else:
+					attendance_data[checkin_day] = {'check_in': None, 'check_out': None, 'breaks': [], 'break_log': [], 'issues': []}
+					attendance_data[checkin_day]['issues'].append(f"{_format_timestamp(checkin.time)} - Break-out without check-in")
+					issues_count += 1
+			else:
+				attendance_data[checkin_day]['breaks'].append(checkin)
+			
+		elif checkin.log_type == 'Break-IN':
+			if checkin_day not in attendance_data:
+				if checkin_stack:
+					checkin_day = _get_checkin_day(checkin_stack[-1].time)
+				else:
+					attendance_data[checkin_day] = {'check_in': None, 'check_out': None, 'breaks': [], 'break_log': [], 'issues': []}
+					attendance_data[checkin_day]['issues'].append(f"{_format_timestamp(checkin.time)} - Break-in without check-in")
+					issues_count += 1
+					continue
+			
+			day_data = attendance_data[checkin_day]
+			if day_data['breaks']:
+				break_out = day_data['breaks'].pop(0)
+				day_data['break_log'].append({'out': break_out, 'in': checkin})
+			else:
+				day_data['issues'].append(f"{_format_timestamp(checkin.time)} - Break in before break out")
+				issues_count += 1
+		else:
+			# Unknown checkin type
+			if checkin_day not in attendance_data:
+				attendance_data[checkin_day] = {'check_in': None, 'check_out': None, 'breaks': [], 'break_log': [], 'issues': []}
+			attendance_data[checkin_day]['issues'].append(f"{_format_timestamp(checkin.time)} - Unknown checkin type")
+			issues_count += 1
+	
+	# FIXED: Handle any remaining unclosed check-ins - assign to correct days
+	if checkin_stack:
+		print(f"      ⚠️  {len(checkin_stack)} unclosed check-in(s) remaining")
+		for unclosed_checkin in checkin_stack:
+			unclosed_day = _get_checkin_day(unclosed_checkin.time)
+			
+			if unclosed_day not in attendance_data:
+				attendance_data[unclosed_day] = {'check_in': None, 'check_out': None, 'breaks': [], 'break_log': [], 'issues': []}
+			
+			attendance_data[unclosed_day]['issues'].append(f"{_format_timestamp(unclosed_checkin.time)} - Checkin without checkout (end of processing)")
+			issues_count += 1
+	
+	# Create attendance records for valid days
+	created_count = 0
+	print(f"   📅 Processing {len(attendance_data)} days:")
+	
+	for day, day_data in attendance_data.items():
+		day_issues = day_data['issues']
+		has_checkout = day_data['check_out'] is not None
+		has_checkin = day_data['check_in'] is not None
+		
+		if day_issues:
+			print(f"      🗓️  {day}: ❌ SKIPPED - {len(day_issues)} issue(s)")
+			for issue in day_issues:
+				print(f"         ⚠️  {issue}")
+		elif not has_checkin:
+			print(f"      🗓️  {day}: ❌ SKIPPED - No check-in found")
+			issues_count += 1
+		elif not has_checkout:
+			print(f"      🗓️  {day}: ❌ SKIPPED - No check-out found (incomplete day)")
+			issues_count += 1
+		else:
+			# Valid day - create attendance using improved function
+			try:
+				check_in_time = day_data['check_in'].time.strftime("%H:%M")
+				check_out_time = day_data['check_out'].time.strftime("%H:%M")
+				break_count = len(day_data['break_log'])
+				
+				_create_attendance_record(day_data, company_name, employee)
+				
+				print(f"      🗓️  {day}: ✅ CREATED - {check_in_time} to {check_out_time}" + 
+					  (f" ({break_count} breaks)" if break_count > 0 else ""))
+				created_count += 1
+				
+			except Exception as e:
+				print(f"      🗓️  {day}: 💥 ERROR - Failed to create: {str(e)}")
+				frappe.log_error("Attendance Creation", f"Error creating attendance for {_build_employee_name(employee)} on {day}: {str(e)}")
+				issues_count += 1
+	
+	# Summary for this employee
+	if created_count > 0:
+		print(f"   ✅ {_build_employee_name(employee)}: {created_count} attendance record(s) created")
+	if issues_count > 0:
+		print(f"   ⚠️  {_build_employee_name(employee)}: {issues_count} issue(s) found")
+	
+	return created_count, issues_count
 
-		#per employee after calculations
-		for day in attendance_data[employee_fullname]['attendance']:
-			if len(attendance_data[employee_fullname]['attendance'][day]['issues']) == 0 and attendance_data[employee_fullname]['attendance'][day]['check_out'] != None:
-				create_and_link_attendance(attendance_data[employee_fullname]['attendance'][day])
+
+def _create_attendance_record(day_data, company_name, employee):
+	"""
+	Create attendance record with fixed time calculations.
+	"""
+	import calendar
+	from datetime import date
+	
+	employee_id = day_data['check_in'].employee
+	
+	# FIXED: Use total_seconds() instead of just seconds for correct time calculation
+	time_diff = day_data['check_out'].time - day_data['check_in'].time
+	working_hours = round(time_diff.total_seconds() / 3600, 2)
+	
+	# Calculate month range for overtime calculation
+	check_in_date = day_data['check_in'].time
+	this_month = date(check_in_date.year, check_in_date.month, 1)
+	days_in_month = calendar.monthrange(check_in_date.year, check_in_date.month)[1]
+	next_month = this_month + timedelta(days=days_in_month)
+	
+	# Get previous work in month
+	previous_work = frappe.db.sql("""
+		SELECT COALESCE(SUM(working_hours) - SUM(COALESCE(break_hours, 0)), 0) as net_working_hours
+		FROM `tabAttendance` 
+		WHERE employee = %s AND attendance_date BETWEEN %s AND %s
+	""", [employee_id, this_month, next_month], as_dict=True)
+	
+	previous_net_hours = previous_work[0].net_working_hours if previous_work else 0
+	
+	# Create attendance document
+	attendance_doc = frappe.get_doc({
+		'doctype': 'Attendance',
+		'attendance_date': check_in_date.date(),
+		'employee': employee_id,
+		'company': company_name,
+		'employee_name': employee.employee_name,
+		'working_hours': working_hours,
+		'status': 'Present',
+		'in_time': day_data['check_in'].time,
+		'out_time': day_data['check_out'].time,
+	})
+	
+	# Process breaks and calculate total break hours
+	total_break_hours = 0
+	checkin_names = [day_data['check_in'].name]
+	
+	for break_entry in day_data['break_log']:
+		break_out = break_entry['out']  # Break start
+		break_in = break_entry['in']    # Break end
+		
+		checkin_names.extend([break_out.name, break_in.name])
+		
+		# FIXED: Use total_seconds() for break duration calculation too
+		break_duration = break_in.time - break_out.time
+		break_hours = round(break_duration.total_seconds() / 3600, 2)
+		
+		if break_hours > 0:
+			attendance_doc.append('breaks', {
+				'break_out': break_out.time, 
+				'break_in': break_in.time
+			})
+			total_break_hours += break_hours
+	
+	attendance_doc.break_hours = total_break_hours
+	checkin_names.append(day_data['check_out'].name)
+	
+	# Calculate overtime
+	net_working_hours = previous_net_hours + working_hours - total_break_hours
+	attendance_doc.overtime_hours = max(0, net_working_hours - 208)
+	
+	# Verbose output for debugging
+	if total_break_hours > 0:
+		print(f"            ⏰ Working: {working_hours}h, Breaks: {total_break_hours}h, Net: {working_hours - total_break_hours}h")
+	else:
+		print(f"            ⏰ Working: {working_hours}h (no breaks)")
+	
+	if attendance_doc.overtime_hours > 0:
+		print(f"            ⏱️  Overtime: {attendance_doc.overtime_hours}h (monthly total: {net_working_hours}h)")
+	
+	# Save and submit
+	attendance_doc.save()
+	
+	# Bulk update checkin records
+	frappe.db.sql("""
+		UPDATE `tabEmployee Checkin` 
+		SET attendance = %s 
+		WHERE name IN ({})
+	""".format(','.join(['%s'] * len(checkin_names))), 
+	[attendance_doc.name] + checkin_names)
+	
+	print(f"            📄 Attendance record '{attendance_doc.name}' created and linked to {len(checkin_names)} checkins")
+	
+	attendance_doc.submit()
+	frappe.db.commit()
 
 
 def create_and_link_attendance(attendances):
-	company = frappe.get_list("Company")[0].name
+	"""
+	Legacy function - kept for backward compatibility.
+	"""
+	company = frappe.get_list("Company", limit=1)
+	company_name = company[0].name if company else None
+	
+	# Get employee data
 	employee = attendances['check_in'].employee
-	working_hours = round((attendances['check_out'].time - attendances['check_in'].time).seconds/36)/100
-	this_month = date(attendances['check_in'].time.year, attendances['check_in'].time.month, 1)
-	next_month = this_month + timedelta(days=calendar.monthrange(attendances['check_in'].time.year, attendances['check_in'].time.month)[1])
-	previous_work = frappe.db.get_list(doctype="Attendance", filters=[['employee','=', employee], ['attendance_date','between',[this_month, next_month]]], fields=['name','sum(working_hours) - sum(break_hours) as net_working_hours','employee'])[0]
-	attendance_doc = frappe.get_doc({
-		 'doctype' : 'Attendance',
-		 'attendance_date' : attendances['check_in'].time.date(),
-		 'employee' : employee,
-		 'company' : company,
-		 'employee_name':  frappe.get_doc("Employee",employee).employee_name,
-		 'working_hours': working_hours,
-		 'status': 'Present',
-		 'in_time': attendances['check_in'].time,
-		 'out_time': attendances['check_out'].time,
-	})
-	attendance_doc.save()
-	checkin_log = [frappe.get_doc('Employee Checkin',attendances['check_in'].name)]
-	total_break_hours = 0
-	for break_entry in attendances['break_log']:
-		break_out = break_entry['in']
-		break_in = break_entry['out']
-		checkin_log.append(frappe.get_doc('Employee Checkin',break_out.name))
-		checkin_log.append(frappe.get_doc('Employee Checkin',break_in.name))
-		if break_out.time > break_in.time:
-			break_hours = round((break_out.time - break_in.time).seconds/36)/100
-			attendance_doc.append('breaks',{'break_out':break_out.time, 'break_in': break_in.time})
-		else:
-			break_hours = round((break_in.time - break_out.time).seconds/36)/100
-			attendance_doc.append('breaks',{'break_out':break_in.time, 'break_in': break_out.time})
-		total_break_hours += break_hours
-	attendance_doc.break_hours = total_break_hours
-	checkin_log.append(frappe.get_doc('Employee Checkin',attendances['check_out'].name))
-	if previous_work.net_working_hours is not None:
-		attendance_doc.overtime_hours = (previous_work.net_working_hours + working_hours - total_break_hours) - 208
-		if attendance_doc.overtime_hours < 0:
-			attendance_doc.overtime_hours = 0
-			
-	for checkin in checkin_log:
-		checkin.attendance = attendance_doc.name
-		checkin.save()
-		
-	attendance_doc.save()
-	attendance_doc.submit()
-	frappe.db.commit()
+	employee_data = frappe.get_doc("Employee", employee)
+	
+	return _create_attendance_record(attendances, company_name, employee_data)
 	
 
 def getAssignments(args=None):
@@ -642,34 +848,128 @@ def update_employee_timesheet_on_attendance_creation(doc, method):
  
  
 @frappe.whitelist()
-def get_list_with_children(doctype, filters=None, fields=None, order_by="modified desc"):
+def get_list_with_children(doctype, filters=None, fields=None, order_by="modified desc", limit=None):
     """
     Fetch a list of documents with their children.
+    Optimized version to reduce database queries from N+1 to a few bulk queries.
 
     Args:
         doctype (str): The DocType to query.
         filters (dict or list, optional): Filters to apply. Defaults to None.
         fields (list, optional): List of fields to fetch. Defaults to None.
         order_by (str, optional): Order by clause. Defaults to "modified desc".
-
+        limit (int, optional): Limit the number of records to fetch. Defaults to None.
     Returns:
         list: List of documents with children.
     """
     try:
         # Ensure filters and fields are valid
         filters = filters or {}
-        fields = fields or ["name"]  # Default to fetching only the name if no fields are specified
-
+        
         # Ensure `filters` is correctly deserialized
         if isinstance(filters, str):
             import json
             filters = json.loads(filters)
 
-        # Fetch the documents
-        doc_names = frappe.get_list(doctype, filters=filters, fields=fields, order_by=order_by)
+        # Get document names efficiently with pluck to get just the names
+        doc_names = frappe.get_all(
+            doctype, 
+            filters=filters, 
+            fields=["name"], 
+            order_by=order_by, 
+            limit=limit,
+            pluck="name"
+        )
+        
+        if not doc_names:
+            return []
 
-        # Retrieve full documents for the fetched names
-        return [frappe.get_doc(doctype, doc["name"]) for doc in doc_names]
+        # Get meta information for the doctype
+        meta = frappe.get_meta(doctype)
+        
+        # Identify child table fields
+        child_table_fields = []
+        for field in meta.fields:
+            if field.fieldtype == "Table":
+                child_table_fields.append({
+                    'fieldname': field.fieldname,
+                    'child_doctype': field.options
+                })
+
+        # Bulk fetch parent records with all fields
+        parent_records = frappe.get_all(
+            doctype,
+            filters={"name": ["in", doc_names]},
+            fields="*"
+        )
+        
+        # Create a mapping for maintaining order
+        name_to_record = {record.name: record for record in parent_records}
+        
+        # Bulk fetch child records for each child table
+        child_data = {}
+        for child_field in child_table_fields:
+            fieldname = child_field['fieldname']
+            child_doctype = child_field['child_doctype']
+            
+            # Fetch all child records for all parents in one query
+            child_records = frappe.get_all(
+                child_doctype,
+                filters={
+                    "parent": ["in", doc_names],
+                    "parenttype": doctype
+                },
+                fields="*",
+                order_by="parent, idx"
+            )
+            
+            # Group child records by parent
+            child_data[fieldname] = {}
+            for child_record in child_records:
+                parent_name = child_record.parent
+                if parent_name not in child_data[fieldname]:
+                    child_data[fieldname][parent_name] = []
+                child_data[fieldname][parent_name].append(child_record)
+
+        # Construct document objects maintaining the original order and structure
+        result_documents = []
+        for doc_name in doc_names:
+            if doc_name in name_to_record:
+                parent_record = name_to_record[doc_name]
+                
+                # Create a new document object
+                doc = frappe.new_doc(doctype)
+                
+                # Set parent fields
+                for key, value in parent_record.items():
+                    if hasattr(doc, key):
+                        setattr(doc, key, value)
+                
+                # Set child table data
+                for child_field in child_table_fields:
+                    fieldname = child_field['fieldname']
+                    if fieldname in child_data and doc_name in child_data[fieldname]:
+                        # Clear existing child records
+                        setattr(doc, fieldname, [])
+                        
+                        # Add child records
+                        for child_record in child_data[fieldname][doc_name]:
+                            child_doc = frappe.new_doc(child_field['child_doctype'])
+                            for child_key, child_value in child_record.items():
+                                if hasattr(child_doc, child_key):
+                                    setattr(child_doc, child_key, child_value)
+                            
+                            # Append to parent
+                            doc.append(fieldname, child_doc)
+                
+                # Set document as loaded to avoid additional queries
+                doc._doc_before_save = None
+                doc.flags.ignore_permissions = True
+                
+                result_documents.append(doc)
+
+        return result_documents
+        
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), _("Error in get_list_with_children"))
         frappe.throw(_("An error occurred while fetching records. Please check the logs for more details."))
@@ -838,6 +1138,8 @@ def get_multiple_lists_with_children(doctypes):
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), _("Error in get_multiple_lists_with_children"))
         frappe.throw(_("An error occurred while fetching records. Please check the logs for more details."))
+
+
 
 @frappe.whitelist()
 def vote(doctype, docname, fieldname, unique_field, values, is_delete):
@@ -1044,6 +1346,11 @@ def fetch_users():
         return frappe.db.get_all("User",fields='*')
     
     additional_context = profile_context.profile_members_doctype
+    
+    # Check if additional_context is None or empty
+    if not additional_context:
+        return frappe.db.get_all("User",fields='*')
+        
     context_doctype = frappe.get_doc("DocType", additional_context, ignore_permissions=True)
     filter_field = None
     for field in context_doctype.fields:
@@ -1102,3 +1409,370 @@ def sales_invoice_before_insert(doc,method=None):
         item.net_amount = amount
         item.base_net_amount = amount
         
+@frappe.whitelist()
+def get_sales_by_item(from_date, to_date):
+    sales_data = {}
+    items = frappe.db.get_all("Item", fields='*' , filters={'item_group': ['!=', 'Raw Material']})
+    total_sales = 0
+    for item in items:
+        item_sales = frappe.db.get_all('POS Invoice Item', filters={'item_code':item.name, 'creation':['between',(from_date,to_date)]}, fields='*')
+        for item_sale in item_sales:
+            total_sales += item_sale.base_amount
+            if item_sale.item_code not in sales_data.keys():
+                sales_data[item_sale.item_code] = {
+                    'revenue': 0,
+                    'orders' : 0,
+                    'percentage': 0
+                }
+            sales_data[item_sale.item_code]['revenue'] += item_sale.base_amount
+            sales_data[item_sale.item_code]['orders'] += item_sale.qty
+            sales_data[item_sale.item_code]['item_group'] = item_sale.item_group
+            sales_data[item_sale.item_code]['image'] = item.image
+            
+    return sales_data  
+
+@frappe.whitelist()
+def verify():
+    company = frappe.get_doc("Company", frappe.get_list("Company")[0])
+    if frappe.session.user != "Administrator":
+        if frappe.local.request_ip == company.domain:
+            return True
+        else:
+            return False
+        
+    company.domain = frappe.get_request_header('X-Forwarded-For')
+    company.save()
+    return "IP set successfully"
+    
+    
+@frappe.whitelist()
+def employee_attendance(date=None, employee=None):
+    """
+    Get employee attendance data for the specified month.
+    If no date is provided, uses current month.
+    
+    Args:
+        date: Date string in format 'YYYY-MM-DD' or datetime object
+        
+    Returns:
+        Dict containing attendance data for all employees for the month
+    """
+    
+    print(f"[VERBOSE] Starting employee_attendance function with date parameter: {date}")
+    
+    # Parse input date and determine month/year to process
+    if date is None:
+        target_date = datetime.now() - timedelta(hours=5)  # Timezone offset
+        print(f"[VERBOSE] No date provided, using current date with timezone offset: {target_date}")
+    else:
+        if isinstance(date, str):
+            target_date = datetime.strptime(date, "%Y-%m-%d")
+            print(f"[VERBOSE] Parsed string date: {date} -> {target_date}")
+        else:
+            target_date = date
+            print(f"[VERBOSE] Using provided datetime object: {target_date}")
+    
+    current_day = target_date.day
+    current_month = target_date.month
+    current_year = target_date.year
+    
+    print(f"[VERBOSE] Processing data for: Day={current_day}, Month={current_month}, Year={current_year}")
+    
+    # Calculate month boundaries
+    month_start = datetime(current_year, current_month, 1, 5)  # Start at 5 AM on 1st
+    if current_month == 12:
+        month_end = datetime(current_year + 1, 1, 1, 5)  # End at 5 AM on 1st of next year
+    else:
+        month_end = datetime(current_year, current_month + 1, 1, 5)  # End at 5 AM on 1st of next month
+    
+    print(f"[VERBOSE] Month boundaries: Start={month_start}, End={month_end}")
+    
+    # Configuration
+    overtime_after = 208
+    total_salaries = 0
+    total_advances = 0
+    
+    print(f"[VERBOSE] Configuration: overtime_after={overtime_after} hours")
+    
+    # Get all active employees
+    print(f"[VERBOSE] Fetching all active employees...")
+    if employee:
+        employee_list = frappe.get_all("Employee", filters={'name': employee}, fields=['name', 'first_name', 'last_name', 'hourly_rate', 'designation'])
+    else:  
+        employee_list = frappe.get_all(
+            "Employee",
+            fields=['name', 'first_name', 'last_name', 'hourly_rate', 'designation'],
+            filters={'status': 'Active'}
+        )
+    
+    print(f"[VERBOSE] Found {len(employee_list)} active employees")
+    
+    if not employee_list:
+        print(f"[VERBOSE] No active employees found, returning empty result")
+        return {
+            'total_salaries': 0,
+            'total_advances': 0,
+            'net_salaries': 0,
+            'employee_attendance': {}
+        }
+    
+    # Get all employee names for bulk queries
+    employee_names = [emp.name for emp in employee_list]
+    print(f"[VERBOSE] Employee names for bulk queries: {employee_names}")
+    
+    # Bulk fetch all checkin data for the month
+    print(f"[VERBOSE] Fetching all employee checkin data for the month...")
+    all_checkins = frappe.get_list(
+        "Employee Checkin",
+        filters=[
+            ['Employee Checkin', 'employee', 'in', employee_names],
+            ['Employee Checkin', 'time', '>=', month_start],
+            ['Employee Checkin', 'time', '<', month_end]
+        ],
+        fields=['employee', 'name', 'time', 'log_type'],
+        order_by='employee, time asc'
+    )
+    
+    print(f"[VERBOSE] Found {len(all_checkins)} checkin records")
+    
+    # Bulk fetch all advance data for the month
+    print(f"[VERBOSE] Fetching all employee advance data for the month...")
+    all_advances = frappe.get_list(
+        "Employee Advance",
+        filters=[
+            ['Employee Advance', 'employee', 'in', employee_names],
+            ['Employee Advance', 'posting_date', '>=', month_start],
+            ['Employee Advance', 'posting_date', '<', month_end]
+        ],
+        fields=['employee', 'advance_amount', 'posting_date', 'purpose']
+    )
+    
+    print(f"[VERBOSE] Found {len(all_advances)} advance records")
+    
+    # Group data by employee
+    print(f"[VERBOSE] Grouping checkin and advance data by employee...")
+    checkins_by_employee = {}
+    advances_by_employee = {}
+    
+    for checkin in all_checkins:
+        if checkin.employee not in checkins_by_employee:
+            checkins_by_employee[checkin.employee] = []
+        checkins_by_employee[checkin.employee].append(checkin)
+    
+    for advance in all_advances:
+        if advance.employee not in advances_by_employee:
+            advances_by_employee[advance.employee] = []
+        advances_by_employee[advance.employee].append(advance)
+    
+    print(f"[VERBOSE] Grouped data: {len(checkins_by_employee)} employees with checkins, {len(advances_by_employee)} employees with advances")
+    
+    attendance_data = {}
+    
+    # Process each employee
+    print(f"[VERBOSE] Starting to process each employee...")
+    for employee in employee_list:
+        # Build employee full name
+        employee_fullname = employee.first_name or ""
+        if employee.last_name:
+            employee_fullname += " " + employee.last_name
+        
+        print(f"[VERBOSE] Processing employee: {employee_fullname} ({employee.name})")
+        
+        # Initialize employee data
+        attendance_data[employee_fullname] = {
+            'attendance': {},
+            'working_hours': 0,
+            'designation': employee.designation,
+            'break_hours': 0,
+            'advance': 0,
+            'net_working_hours': 0,
+            'todays_work_hours': 0,
+            'overtime_hours': 0,
+            'hourly_rate': employee.hourly_rate or 0,
+            'salary': 0,
+            'salary_after_advances': 0,
+            'status': "Off",
+            'overtime': False
+        }
+        
+        # Process advances
+        employee_advances = advances_by_employee.get(employee.name, [])
+        print(f"[VERBOSE]   Found {len(employee_advances)} advance records for {employee_fullname}")
+        for advance in employee_advances:
+            attendance_data[employee_fullname]['advance'] += advance.advance_amount or 0
+        
+        if employee_advances:
+            print(f"[VERBOSE]   Total advances for {employee_fullname}: {attendance_data[employee_fullname]['advance']}")
+        
+        # Process checkins
+        checkin_list = checkins_by_employee.get(employee.name, [])
+        print(f"[VERBOSE]   Found {len(checkin_list)} checkin records for {employee_fullname}")
+        checkin_stack = []
+        
+        for checkin in checkin_list:
+            checkin_day = (checkin.time - timedelta(hours=5)).day
+            day_key = str(checkin_day)
+            print(f"[VERBOSE]     Processing {checkin.log_type} at {checkin.time} for day {checkin_day}")
+            
+            # Initialize day data if not exists
+            if day_key not in attendance_data[employee_fullname]['attendance']:
+                attendance_data[employee_fullname]['attendance'][day_key] = {
+                    'in_time': None,
+                    'out_time': None,
+                    'check_in': None,
+                    'check_out': None,
+                    'breaks': [],
+                    'break_log': [],
+                    'issues': [],
+                    'shifts': 0,
+                    'work_time': 0,
+                    'break_time': 0
+                }
+            
+            day_data = attendance_data[employee_fullname]['attendance'][day_key]
+            
+            # Process different checkin types
+            if checkin.log_type == 'IN':
+                if day_data['in_time'] is not None:
+                    day_data['issues'].append(f"{checkin.time.strftime('%d/%m/%Y, %H:%M:%S')} - Double Check-in same day")
+                day_data['in_time'] = checkin.time
+                day_data['check_in'] = checkin
+                attendance_data[employee_fullname]['status'] = "Working"
+                checkin_stack.append(checkin)
+                day_data['shifts'] += 1
+                
+            elif checkin.log_type == 'OUT':
+                day_data['out_time'] = checkin.time
+                day_data['check_out'] = checkin
+                attendance_data[employee_fullname]['status'] = "Off"
+                
+                if not checkin_stack:
+                    day_data['issues'].append(f"{checkin.time.strftime('%d/%m/%Y, %H:%M:%S')} - Check-out without check-in")
+                else:
+                    clock_in = checkin_stack.pop()
+                    clockin_day = (clock_in.time - timedelta(hours=5)).day
+                    
+                    if checkin_day == clockin_day:
+                        # Same day shift
+                        work_time = checkin.time - clock_in.time
+                        work_hours = round(work_time.total_seconds() / 3600, 2)
+                        day_data['work_time'] += work_hours
+                        attendance_data[employee_fullname]['working_hours'] += work_hours
+                    elif (checkin_day - clockin_day) > 1:
+                        day_data['issues'].append(f"{clock_in.time.strftime('%d/%m/%Y, %H:%M:%S')} - Employee checked in for more than 2 days")
+                    else:
+                        # Shift carries over to next day
+                        # End first day at 4:59 AM
+                        first_day_end = datetime(current_year, current_month, checkin_day, 4, 59)
+                        work_time1 = first_day_end - clock_in.time
+                        work_hours1 = round(work_time1.total_seconds() / 3600, 2)
+                        
+                        clockin_day_key = str(clockin_day)
+                        if clockin_day_key in attendance_data[employee_fullname]['attendance']:
+                            attendance_data[employee_fullname]['attendance'][clockin_day_key]['work_time'] += work_hours1
+                            attendance_data[employee_fullname]['attendance'][clockin_day_key]['out_time'] = first_day_end
+                        
+                        # Start second day at 5:00 AM
+                        second_day_start = datetime(current_year, current_month, checkin_day, 5)
+                        work_time2 = checkin.time - second_day_start
+                        work_hours2 = round(work_time2.total_seconds() / 3600, 2)
+                        
+                        day_data['in_time'] = second_day_start
+                        day_data['work_time'] += work_hours2
+                        
+                        attendance_data[employee_fullname]['working_hours'] += work_hours1 + work_hours2
+                
+                # Clear any remaining unclosed checkins
+                while checkin_stack:
+                    unclosed_checkin = checkin_stack.pop()
+                    unclosed_day = (unclosed_checkin.time - timedelta(hours=5)).day
+                    unclosed_day_key = str(unclosed_day)
+                    if unclosed_day_key in attendance_data[employee_fullname]['attendance']:
+                        attendance_data[employee_fullname]['attendance'][unclosed_day_key]['issues'].append(
+                            f"{unclosed_checkin.time.strftime('%d/%m/%Y, %H:%M:%S')} - Checkin without checkout"
+                        )
+                        
+            elif checkin.log_type == 'Break-OUT':
+                day_data['breaks'].append(checkin)
+                attendance_data[employee_fullname]['status'] = "On Break"
+                
+            elif checkin.log_type == 'Break-IN':
+                if day_data['breaks']:
+                    attendance_data[employee_fullname]['status'] = "Working"
+                    break_start = day_data['breaks'][0]
+                    break_time = checkin.time - break_start.time
+                    break_hours = round(break_time.total_seconds() / 3600, 2)
+                    
+                    day_data['break_time'] += break_hours
+                    attendance_data[employee_fullname]['break_hours'] += break_hours
+                    day_data['break_log'].append({'out': break_start, 'in': checkin})
+                    day_data['breaks'].pop(0)
+                else:
+                    day_data['issues'].append(f"{checkin.time.strftime('%d/%m/%Y, %H:%M:%S')} - Break in before break out")
+            else:
+                day_data['issues'].append(f"{checkin.time.strftime('%d/%m/%Y, %H:%M:%S')} - Unknown checkin type")
+        
+        # Calculate current day work hours only if it's actually today and employee is currently working
+        is_current_date = (target_date.date() == datetime.now().date())
+        if is_current_date and str(current_day) in attendance_data[employee_fullname]['attendance']:
+            current_day_data = attendance_data[employee_fullname]['attendance'][str(current_day)]
+            try:
+                if attendance_data[employee_fullname]['status'] == "Working" and current_day_data.get('in_time'):
+                    current_time = datetime.now()
+                    todays_work_hours = round((current_time - current_day_data['in_time']).total_seconds() / 3600, 2)
+                    attendance_data[employee_fullname]['working_hours'] += todays_work_hours
+                    attendance_data[employee_fullname]['todays_work_hours'] = todays_work_hours
+                elif attendance_data[employee_fullname]['status'] == "On Break" and current_day_data.get('breaks'):
+                    if current_day_data.get('in_time'):
+                        break_start_time = current_day_data['breaks'][0].time
+                        todays_work_hours = round((break_start_time - current_day_data['in_time']).total_seconds() / 3600, 2)
+                        attendance_data[employee_fullname]['working_hours'] += todays_work_hours
+                        attendance_data[employee_fullname]['todays_work_hours'] = todays_work_hours
+                elif attendance_data[employee_fullname]['status'] == "Off":
+                    attendance_data[employee_fullname]['todays_work_hours'] = current_day_data.get('work_time', 0)
+            except Exception as e:
+                frappe.log_error(f"Error calculating today's hours for {employee_fullname}: {str(e)}")
+        
+        # Calculate final totals
+        emp_data = attendance_data[employee_fullname]
+        emp_data['net_working_hours'] = round(emp_data['working_hours'] - emp_data['break_hours'], 2)
+        emp_data['working_hours'] = round(emp_data['working_hours'], 2)
+        emp_data['break_hours'] = round(emp_data['break_hours'], 2)
+        
+        print(f"[VERBOSE]   {employee_fullname} totals: Working={emp_data['working_hours']}h, Breaks={emp_data['break_hours']}h, Net={emp_data['net_working_hours']}h")
+        
+        # Handle overtime
+        if emp_data['net_working_hours'] > overtime_after:
+            emp_data['overtime'] = True
+            emp_data['overtime_hours'] = round(emp_data['net_working_hours'] - overtime_after, 2)
+            original_net_hours = emp_data['net_working_hours']
+            emp_data['net_working_hours'] = overtime_after + ((emp_data['net_working_hours'] - overtime_after) * 1.5)
+            print(f"[VERBOSE]   {employee_fullname} has OVERTIME: {emp_data['overtime_hours']}h (adjusted net hours: {original_net_hours} -> {emp_data['net_working_hours']})")
+        
+        # Calculate salary
+        emp_data['salary'] = round(emp_data['hourly_rate'] * emp_data['net_working_hours'], 2)
+        emp_data['salary_after_advances'] = round(emp_data['salary'] - emp_data['advance'], 2)
+        
+        print(f"[VERBOSE]   {employee_fullname} salary calculation: {emp_data['hourly_rate']}/h * {emp_data['net_working_hours']}h = ${emp_data['salary']} (after advances: ${emp_data['salary_after_advances']})")
+        
+        total_salaries += emp_data['salary']
+        total_advances += emp_data['advance']
+    
+    print(f"[VERBOSE] All employees processed!")
+    print(f"[VERBOSE] FINAL TOTALS:")
+    print(f"[VERBOSE]   Total Salaries: ${round(total_salaries, 2)}")
+    print(f"[VERBOSE]   Total Advances: ${round(total_advances, 2)}")
+    print(f"[VERBOSE]   Net Salaries: ${round(total_salaries - total_advances, 2)}")
+    print(f"[VERBOSE]   Month/Year: {current_month}/{current_year}")
+    print(f"[VERBOSE]   Processed Date: {target_date.strftime('%Y-%m-%d')}")
+    print(f"[VERBOSE] Function completed successfully!")
+    
+    return {
+        'total_salaries': round(total_salaries, 2),
+        'total_advances': round(total_advances, 2),
+        'net_salaries': round(total_salaries - total_advances, 2),
+        'employee_attendance': attendance_data,
+        'month': current_month,
+        'year': current_year,
+        'processed_date': target_date.strftime('%Y-%m-%d')
+    }
