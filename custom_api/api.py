@@ -13,6 +13,7 @@ from datetime import datetime, timedelta, date
 import calendar
 from frappe.auth import LoginManager
 from frappe.desk.form.document_follow import follow_document
+from frappe.permissions import has_permission
 from frappe.desk.doctype.notification_log.notification_log import (
 	enqueue_create_notification,
 	get_title,
@@ -111,7 +112,7 @@ def dev():
 
 
 def validate_lead(doc, method=None):
-    if "Binance" in doc.company_name:
+    if doc.company_name and"Binance" in doc.company_name:
         frappe.throw("Invalid Request")
         
 @frappe.whitelist()
@@ -283,7 +284,7 @@ def create_employee_attendance():
 		
 		# Fetch all data upfront to avoid N+1 queries
 		print("📥 Fetching employee data and unlinked checkins...")
-		employees = frappe.get_list("Employee", fields=['name', 'first_name', 'last_name', 'employee_name'])
+		employees = frappe.get_list("Employee",filters={'status': 'Active'}, fields=['name', 'first_name', 'last_name', 'employee_name'])
 		
 		if not employees:
 			print("❌ No employees found in the system")
@@ -1446,7 +1447,7 @@ def verify():
     
     
 @frappe.whitelist()
-def employee_attendance(date=None, employee=None):
+def employee_attendance(date=None, employee=None, company=None):
     """
     Get employee attendance data for the specified month.
     If no date is provided, uses current month.
@@ -1457,6 +1458,10 @@ def employee_attendance(date=None, employee=None):
     Returns:
         Dict containing attendance data for all employees for the month
     """
+    if company is None:
+        company = frappe.get_doc("Company", frappe.get_list("Company")[0])
+    else:
+        company = frappe.get_doc("Company", company)
     
     print(f"[VERBOSE] Starting employee_attendance function with date parameter: {date}")
     
@@ -1549,6 +1554,43 @@ def employee_attendance(date=None, employee=None):
     
     print(f"[VERBOSE] Found {len(all_advances)} advance records")
     
+    # Fetch petty cash advances from Journal Entries for the month
+    print(f"[VERBOSE] Fetching petty cash advances from Journal Entries for the month...")
+    je_petty_cash_rows = frappe.get_all(
+        "Journal Entry",
+        fields=[
+            "name",
+            "posting_date",
+            "`tabJournal Entry Account`.party as party",
+            "`tabJournal Entry Account`.debit_in_account_currency as debit",
+            "`tabJournal Entry Account`.credit_in_account_currency as credit",
+        ],
+        filters=[
+            ["Journal Entry Account", "account", "=", f"Payroll Payable - {company.abbr}"],
+            ["Journal Entry", "title", "like", "%Petty Cash%"],
+            ["Journal Entry", "posting_date", ">=", month_start.date()],
+            ["Journal Entry", "posting_date", "<", month_end.date()],
+            ["Journal Entry Account", "party", "in", employee_names],
+        ],
+        order_by="posting_date desc",
+    )
+    print(f"[VERBOSE] Found {len(je_petty_cash_rows)} petty cash JE rows")
+    # Aggregate JE advances per employee
+    je_advances_by_employee = {}
+    for row in je_petty_cash_rows:
+        party = row.get("party")
+        if not party:
+            continue
+        debit = row.get("debit") or 0
+        credit = row.get("credit") or 0
+        amount = (debit - credit) or 0
+        if amount <= 0:
+            continue
+        if party not in je_advances_by_employee:
+            je_advances_by_employee[party] = 0
+        je_advances_by_employee[party] += amount
+    print(f"[VERBOSE] Aggregated JE advances for {len(je_advances_by_employee)} employees")
+    
     # Group data by employee
     print(f"[VERBOSE] Grouping checkin and advance data by employee...")
     checkins_by_employee = {}
@@ -1567,7 +1609,7 @@ def employee_attendance(date=None, employee=None):
     print(f"[VERBOSE] Grouped data: {len(checkins_by_employee)} employees with checkins, {len(advances_by_employee)} employees with advances")
     
     attendance_data = {}
-    
+    checkin_stack = []
     # Process each employee
     print(f"[VERBOSE] Starting to process each employee...")
     for employee in employee_list:
@@ -1603,6 +1645,12 @@ def employee_attendance(date=None, employee=None):
         
         if employee_advances:
             print(f"[VERBOSE]   Total advances for {employee_fullname}: {attendance_data[employee_fullname]['advance']}")
+        
+        # Add petty cash JE advances
+        je_advance_amount = je_advances_by_employee.get(employee.name, 0)
+        if je_advance_amount:
+            attendance_data[employee_fullname]['advance'] += je_advance_amount
+            print(f"[VERBOSE]   Added petty cash JE advances for {employee_fullname}: {je_advance_amount}")
         
         # Process checkins
         checkin_list = checkins_by_employee.get(employee.name, [])
@@ -1712,6 +1760,16 @@ def employee_attendance(date=None, employee=None):
             else:
                 day_data['issues'].append(f"{checkin.time.strftime('%d/%m/%Y, %H:%M:%S')} - Unknown checkin type")
         
+        while checkin_stack:
+            unclosed_checkin = checkin_stack.pop()
+            unclosed_day = (unclosed_checkin.time - timedelta(hours=5)).day
+            unclosed_day_key = str(unclosed_day)
+            today = (frappe.utils.now_datetime() - timedelta(hours=5)).date()
+            if unclosed_day_key in attendance_data[employee_fullname]['attendance'] and today != (unclosed_checkin.time - timedelta(hours=5)).date():
+                attendance_data[employee_fullname]['attendance'][unclosed_day_key]['issues'].append(
+                    f"{unclosed_checkin.time.strftime('%d/%m/%Y, %H:%M:%S')} - Checkin without checkout"
+                )
+
         # Calculate current day work hours only if it's actually today and employee is currently working
         is_current_date = (target_date.date() == datetime.now().date())
         if is_current_date and str(current_day) in attendance_data[employee_fullname]['attendance']:
@@ -1776,3 +1834,213 @@ def employee_attendance(date=None, employee=None):
         'year': current_year,
         'processed_date': target_date.strftime('%Y-%m-%d')
     }
+    
+
+    
+@frappe.whitelist()
+def get_doctype_permissions(doctype: str, name: str | None = None):
+    """
+    Return the current session user's permissions on a DocType (and optionally a specific doc).
+    """	
+    
+    PERM_TYPES = [
+		"read", "write", "create", "delete",
+		"submit", "cancel", "amend",
+		"print", "email", "report", "share",
+		"import", "export", "set_user_permissions",
+	]
+    
+    user = frappe.session.user
+
+    # Validate doctype exists
+    frappe.get_meta(doctype)  # will throw if invalid
+
+    doc = None
+    if name:
+        try:
+            doc = frappe.get_doc(doctype, name)
+        except Exception:
+            doc = None
+
+    perms = {}
+    for p in PERM_TYPES:
+        perms[p] = bool(
+            has_permission(
+                doctype=doctype,
+                ptype=p,
+                doc=doc,
+                user=user,
+            )
+        )
+
+    return {
+        "user": user,
+        "doctype": doctype,
+        "docname": name,
+        "permissions": perms,
+    }
+
+
+@frappe.whitelist()
+def get_linked_docs_with_metadata(doctype, name):
+    """
+    Aggregate related docs for a document and split into submitted vs other.
+
+    Returns an object with two keys:
+    - submitted_docs: {
+        doctype: {
+          link_fieldnames: ["..."],
+          link_fields_meta: [{fieldname, fieldtype, label, options, option_label}],
+          allow_on_submit: 0/1,
+          reqd: 0/1,
+          is_submittable: 0/1,
+          docs: [{docname, title, link_fieldnames, allow_on_submit}]
+        }
+      }
+    - other_related_docs: same structure as submitted_docs
+    """
+    # Validate permission
+    frappe.has_permission(doctype, doc=name)
+
+    # Import here to avoid circulars at import time
+    from frappe.desk.form import linked_with as linked_with_mod
+
+    # 1) All related docs (direct references)
+    all_related = linked_with_mod.get(doctype, name) or {}
+
+    # 2) All submitted linked docs (nested traversal)
+    submitted_payload = linked_with_mod.get_submitted_linked_docs(doctype, name) or {}
+    submitted_rows = submitted_payload.get("docs", []) or []
+
+    # For quick membership test
+    submitted_set = {(row.get("doctype"), row.get("name")) for row in submitted_rows if row.get("doctype") and row.get("name")}
+
+    # Linked field mapping (how each doctype links back to our source doctype)
+    linked_map = linked_with_mod.get_linked_doctypes(doctype)
+
+    def _get_title(dt, dn):
+        try:
+            return get_title(dt, dn)
+        except Exception:
+            return None
+
+    def _collect_table_fields_pointing_to_child(parent_dt, child_dt):
+        """When our current document is a child doctype and parent_dt has a Table field with options=child_dt,
+        return those Table DocFields' metadata from the parent doctype."""
+        meta = frappe.get_meta(parent_dt)
+        results = []
+        for df in meta.fields:
+            if df.fieldtype in frappe.model.table_fields and df.options == child_dt:
+                results.append(df)
+        return results
+
+    def _link_field_meta_for(parent_dt):
+        """Return tuple: (fieldname_labels, allow_on_submit_any, reqd_any, fields_meta).
+
+        Handles Link, Dynamic Link, child table link fields and get_parent(Table) relationship.
+        For child link fields returns names like "ChildDT.fieldname".
+        """
+        info = linked_map.get(parent_dt) or {}
+        fieldname_labels = []
+        allow_any = 0
+        reqd_any = 0
+        fields_meta = []
+
+        def _option_label_for(df):
+            # For Link/Table types, options usually holds a DocType name
+            try:
+                if getattr(df, "options", None) and df.fieldtype in ("Link", "Table", "Table MultiSelect"):
+                    # If options is a DocType, return its name (label)
+                    frappe.get_meta(df.options)
+                    return df.options
+            except Exception:
+                pass
+            return getattr(df, "options", None)
+
+        def _append_df_meta(df, qualified_fieldname):
+            nonlocal allow_any, reqd_any
+            fieldname_labels.append(qualified_fieldname)
+            allow_any = 1 if (allow_any or int(getattr(df, "allow_on_submit", 0) or 0)) else 0
+            reqd_any = 1 if (reqd_any or int(getattr(df, "reqd", 0) or 0)) else 0
+            fields_meta.append({
+                "fieldname": qualified_fieldname,
+                "fieldtype": getattr(df, "fieldtype", None),
+                "label": getattr(df, "label", None),
+                "options": getattr(df, "options", None),
+                "option_label": _option_label_for(df),
+            })
+
+        # Direct link/dynamic link fields on the parent doctype
+        if info.get("fieldname") and not info.get("child_doctype"):
+            fn = info.get("fieldname")
+            fn_list = fn if isinstance(fn, list) else [fn]
+            meta = frappe.get_meta(parent_dt)
+            for fname in fn_list:
+                df = meta.get_field(fname)
+                if df:
+                    _append_df_meta(df, fname)
+
+        # Link lives on a child row used inside parent_dt
+        if info.get("child_doctype") and info.get("fieldname"):
+            child_dt = info.get("child_doctype")
+            fn = info.get("fieldname")
+            fn_list = fn if isinstance(fn, list) else [fn]
+            child_meta = frappe.get_meta(child_dt)
+            for fname in fn_list:
+                df = child_meta.get_field(fname)
+                if df:
+                    _append_df_meta(df, f"{child_dt}.{fname}")
+
+        # Parent has a Table field with options == our source doctype (get_parent case)
+        if info.get("get_parent"):
+            # Our current source doctype may be a child table
+            for df in _collect_table_fields_pointing_to_child(parent_dt, doctype):
+                _append_df_meta(df, df.fieldname)
+
+        return fieldname_labels, allow_any, reqd_any, fields_meta
+
+    def _aggregate(dt_to_rows):
+        agg = {}
+        for dt, rows in (dt_to_rows or {}).items():
+            if not rows:
+                continue
+            fieldnames, allow_any, reqd_any, fields_meta = _link_field_meta_for(dt)
+            is_submittable = 1 if frappe.get_meta(dt).is_submittable else 0
+            docs_list = []
+            for r in rows:
+                dn = r.get("name")
+                docs_list.append({
+                    "docname": dn,
+                    "title": _get_title(dt, dn),
+                    "link_fieldnames": fieldnames,
+                    "allow_on_submit": int(allow_any),
+                })
+            agg[dt] = {
+                "link_fieldnames": fieldnames,
+                "link_fields_meta": fields_meta,
+                "allow_on_submit": int(allow_any),
+                "reqd": int(reqd_any),
+                "is_submittable": is_submittable,
+                "docs": docs_list,
+            }
+        return agg
+
+    # Build submitted intersection limited to "directly related" list
+    submitted_intersection = {}
+    for dt, rows in (all_related or {}).items():
+        only_submitted = [r for r in rows if (dt, r.get("name")) in submitted_set]
+        if only_submitted:
+            submitted_intersection[dt] = only_submitted
+
+    # Build other related (not in submitted)
+    other_related = {}
+    for dt, rows in (all_related or {}).items():
+        non_submitted = [r for r in rows if (dt, r.get("name")) not in submitted_set]
+        if non_submitted:
+            other_related[dt] = non_submitted
+
+    return {
+        "submitted_docs": _aggregate(submitted_intersection),
+        "other_related_docs": _aggregate(other_related),
+    }
+
