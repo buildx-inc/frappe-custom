@@ -1,0 +1,57 @@
+{
+ "add_total_row": 0,
+ "columns": [],
+ "creation": "2025-11-07 12:42:58.968857",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [
+  {
+   "default": "Today",
+   "fieldname": "log_date",
+   "fieldtype": "Date",
+   "label": "Date",
+   "mandatory": 1,
+   "wildcard_filter": 0
+  },
+  {
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "label": "Designation",
+   "mandatory": 0,
+   "options": "Designation",
+   "wildcard_filter": 0
+  }
+ ],
+ "idx": 75,
+ "is_standard": "Yes",
+ "letter_head": "Default",
+ "letterhead": null,
+ "modified": "2025-12-10 11:00:50.771719",
+ "modified_by": "Administrator",
+ "module": "Custom Api",
+ "name": "Employee Daily Checkins",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "WITH checkins AS (\n    SELECT\n        ec.employee,\n        emp.employee_name,\n        ec.time AS in_time,\n        (\n            SELECT out_log.time\n            FROM `tabEmployee Checkin` out_log\n            WHERE\n                out_log.employee = ec.employee\n                AND out_log.log_type = 'OUT'\n                AND out_log.time > ec.time\n                AND out_log.time <= ec.time + INTERVAL 1 DAY\n            ORDER BY out_log.time\n            LIMIT 1\n        ) AS out_time\n    FROM `tabEmployee Checkin` ec\n    JOIN `tabEmployee` emp\n      ON emp.name = ec.employee\n    WHERE\n        ec.log_type = 'IN'\n        AND DATE(ec.time) = %(log_date)s\n        AND (\n            %(designation)s IS NULL\n            OR %(designation)s = ''\n            OR emp.designation = %(designation)s\n        )\n),\n\nfinal_work_log AS (\n    SELECT\n        employee,\n        employee_name,\n        in_time,\n        out_time,\n        CASE\n            WHEN out_time IS NOT NULL AND out_time > in_time\n            THEN ROUND(TIMESTAMPDIFF(MINUTE, in_time, out_time) / 60, 3)\n            ELSE NULL\n        END AS working_hours\n    FROM checkins\n),\n\ncombined AS (\n    SELECT\n        employee,\n        employee_name,\n        in_time,\n        out_time,\n        working_hours\n    FROM final_work_log\n\n    UNION ALL\n\n    SELECT\n        '' AS employee,\n        'Total' AS employee_name,\n        NULL AS in_time,\n        NULL AS out_time,\n        ROUND(SUM(working_hours), 3) AS working_hours\n    FROM final_work_log\n)\n\nSELECT\n    employee         AS \"Employee ID:Link/Employee:120\",\n    employee_name    AS \"Employee Name:Data:180\",\n    in_time          AS \"First IN:Datetime:160\",\n    out_time         AS \"First OUT:Datetime:160\",\n    working_hours    AS \"Total Working Hours:Float:160\"\nFROM\n    combined\nORDER BY\n    in_time DESC;\n",
+ "ref_doctype": "Employee Checkin",
+ "report_name": "Employee Daily Checkins",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "HR Manager"
+  },
+  {
+   "role": "HR User"
+  },
+  {
+   "role": "Employee"
+  },
+  {
+   "role": "Employee Self Service"
+  }
+ ]
+}

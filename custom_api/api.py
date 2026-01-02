@@ -274,7 +274,7 @@ def log(message, logging_enabled = True):
 	else:
 		print(message)
 
-
+@frappe.whitelist()
 def create_employee_attendance():
 	"""
 	Process employee attendance with bulk data fetching and improved error handling.
@@ -371,6 +371,8 @@ def _process_employee_attendance(employee, checkins, company_name):
 	Process all checkins for a single employee and create attendance records.
 	Returns: (created_count, issues_count)
 	"""
+	# Treat "today" in the same adjusted timezone used for day grouping (UTC-5)
+	today = (frappe.utils.now_datetime() - timedelta(hours=5)).date()
 	# Count checkin types for verbose output
 	checkin_types = {}
 	for checkin in checkins:
@@ -426,6 +428,11 @@ def _process_employee_attendance(employee, checkins, company_name):
 				while checkin_stack:
 					unclosed_checkin = checkin_stack.pop()
 					unclosed_day = _get_checkin_day(unclosed_checkin.time)
+					unclosed_date = (unclosed_checkin.time - timedelta(hours=5)).date()
+					
+					# Do not flag current-day open shifts; they may still be in progress
+					if unclosed_date == today:
+						continue
 					
 					if unclosed_day not in attendance_data:
 						attendance_data[unclosed_day] = {'check_in': None, 'check_out': None, 'breaks': [], 'break_log': [], 'issues': []}
@@ -474,6 +481,11 @@ def _process_employee_attendance(employee, checkins, company_name):
 		print(f"      ⚠️  {len(checkin_stack)} unclosed check-in(s) remaining")
 		for unclosed_checkin in checkin_stack:
 			unclosed_day = _get_checkin_day(unclosed_checkin.time)
+			unclosed_date = (unclosed_checkin.time - timedelta(hours=5)).date()
+			
+			# Do not flag current-day open shifts; they may still be in progress
+			if unclosed_date == today:
+				continue
 			
 			if unclosed_day not in attendance_data:
 				attendance_data[unclosed_day] = {'check_in': None, 'check_out': None, 'breaks': [], 'break_log': [], 'issues': []}
@@ -507,11 +519,21 @@ def _process_employee_attendance(employee, checkins, company_name):
 				check_out_time = day_data['check_out'].time.strftime("%H:%M")
 				break_count = len(day_data['break_log'])
 				
-				_create_attendance_record(day_data, company_name, employee)
+				status, attendance_name = _create_attendance_record(day_data, company_name, employee)
 				
-				print(f"      🗓️  {day}: ✅ CREATED - {check_in_time} to {check_out_time}" + 
-					  (f" ({break_count} breaks)" if break_count > 0 else ""))
-				created_count += 1
+				if status == "created":
+					print(f"      🗓️  {day}: ✅ CREATED - {check_in_time} to {check_out_time}" +
+						  (f" ({break_count} breaks)" if break_count > 0 else ""))
+					created_count += 1
+				elif status == "existing":
+					print(f"      🗓️  {day}: 🔁 EXISTS - linked checkins to existing attendance ({attendance_name})")
+				elif status == "skipped_inactive":
+					print(f"      🗓️  {day}: ⛔ SKIPPED - employee is inactive")
+					issues_count += 1
+				else:
+					# Any other non-fatal outcome
+					print(f"      🗓️  {day}: ⚠️  SKIPPED - {status}")
+					issues_count += 1
 				
 			except Exception as e:
 				print(f"      🗓️  {day}: 💥 ERROR - Failed to create: {str(e)}")
@@ -535,6 +557,50 @@ def _create_attendance_record(day_data, company_name, employee):
 	from datetime import date
 	
 	employee_id = day_data['check_in'].employee
+	attendance_date = day_data['check_in'].time.date()
+
+	# If attendance already exists for that employee/date, do NOT try to create another one.
+	# Instead, just link the checkins to the existing attendance record.
+	existing_attendance = frappe.get_all(
+		"Attendance",
+		filters={
+			"employee": employee_id,
+			"attendance_date": attendance_date,
+			"docstatus": ["!=", 2],  # ignore cancelled attendance
+		},
+		pluck="name",
+		limit=1,
+	)
+	existing_attendance_name = existing_attendance[0] if existing_attendance else None
+
+	# Collect all related checkin names for linking (used both for created/existing)
+	checkin_names = [day_data['check_in'].name]
+	for break_entry in day_data['break_log']:
+		break_out = break_entry['out']
+		break_in = break_entry['in']
+		checkin_names.extend([break_out.name, break_in.name])
+	checkin_names.append(day_data['check_out'].name)
+
+	if existing_attendance_name:
+		frappe.db.sql(
+			"""
+			UPDATE `tabEmployee Checkin`
+			SET attendance = %s
+			WHERE name IN ({})
+			""".format(",".join(["%s"] * len(checkin_names))),
+			[existing_attendance_name] + checkin_names,
+		)
+		frappe.db.commit()
+		print(
+			f"            🔁 Attendance already exists ('{existing_attendance_name}'); linked {len(checkin_names)} checkins"
+		)
+		return "existing", existing_attendance_name
+
+	# Skip creating any HR transactions for inactive employees
+	employee_status = frappe.db.get_value("Employee", employee_id, "status")
+	if employee_status and employee_status != "Active":
+		print(f"            ⛔ Employee '{employee_id}' is '{employee_status}' - skipping attendance creation")
+		return "skipped_inactive", None
 	
 	# FIXED: Use total_seconds() instead of just seconds for correct time calculation
 	time_diff = day_data['check_out'].time - day_data['check_in'].time
@@ -558,7 +624,7 @@ def _create_attendance_record(day_data, company_name, employee):
 	# Create attendance document
 	attendance_doc = frappe.get_doc({
 		'doctype': 'Attendance',
-		'attendance_date': check_in_date.date(),
+		'attendance_date': attendance_date,
 		'employee': employee_id,
 		'company': company_name,
 		'employee_name': employee.employee_name,
@@ -570,13 +636,10 @@ def _create_attendance_record(day_data, company_name, employee):
 	
 	# Process breaks and calculate total break hours
 	total_break_hours = 0
-	checkin_names = [day_data['check_in'].name]
 	
 	for break_entry in day_data['break_log']:
 		break_out = break_entry['out']  # Break start
 		break_in = break_entry['in']    # Break end
-		
-		checkin_names.extend([break_out.name, break_in.name])
 		
 		# FIXED: Use total_seconds() for break duration calculation too
 		break_duration = break_in.time - break_out.time
@@ -590,7 +653,6 @@ def _create_attendance_record(day_data, company_name, employee):
 			total_break_hours += break_hours
 	
 	attendance_doc.break_hours = total_break_hours
-	checkin_names.append(day_data['check_out'].name)
 	
 	# Calculate overtime
 	net_working_hours = previous_net_hours + working_hours - total_break_hours
@@ -606,7 +668,41 @@ def _create_attendance_record(day_data, company_name, employee):
 		print(f"            ⏱️  Overtime: {attendance_doc.overtime_hours}h (monthly total: {net_working_hours}h)")
 	
 	# Save and submit
-	attendance_doc.save()
+	try:
+		attendance_doc.insert(ignore_permissions=True)
+		attendance_doc.submit()
+	except Exception as e:
+		# Race-condition safety: another process may have created attendance after our "exists" check.
+		# If it's a duplicate attendance error, fall back to linking checkins to the existing record.
+		msg = str(e)
+		if ("Duplicate Attendance" in msg) or ("already marked for the date" in msg):
+			existing_attendance = frappe.get_all(
+				"Attendance",
+				filters={
+					"employee": employee_id,
+					"attendance_date": attendance_date,
+					"docstatus": ["!=", 2],
+				},
+				pluck="name",
+				limit=1,
+			)
+			existing_attendance_name = existing_attendance[0] if existing_attendance else None
+			if existing_attendance_name:
+				frappe.db.sql(
+					"""
+					UPDATE `tabEmployee Checkin`
+					SET attendance = %s
+					WHERE name IN ({})
+					""".format(",".join(["%s"] * len(checkin_names))),
+					[existing_attendance_name] + checkin_names,
+				)
+				frappe.db.commit()
+				print(
+					f"            🔁 Attendance already exists ('{existing_attendance_name}'); linked {len(checkin_names)} checkins"
+				)
+				return "existing", existing_attendance_name
+		# Not a duplicate, bubble up to be logged by caller
+		raise
 	
 	# Bulk update checkin records
 	frappe.db.sql("""
@@ -617,9 +713,9 @@ def _create_attendance_record(day_data, company_name, employee):
 	[attendance_doc.name] + checkin_names)
 	
 	print(f"            📄 Attendance record '{attendance_doc.name}' created and linked to {len(checkin_names)} checkins")
-	
-	attendance_doc.submit()
+
 	frappe.db.commit()
+	return "created", attendance_doc.name
 
 
 def create_and_link_attendance(attendances):
@@ -1657,6 +1753,40 @@ def employee_attendance(date=None, employee=None, company=None):
         print(f"[VERBOSE]   Found {len(checkin_list)} checkin records for {employee_fullname}")
         checkin_stack = []
         
+        # Seed stack with an open check-in before the month window (handles cross-month shifts)
+        prev_open_checkin = None
+        prev_checkin = frappe.get_list(
+            "Employee Checkin",
+            filters=[
+                ['Employee Checkin', 'employee', '=', employee.name],
+                ['Employee Checkin', 'time', '<', month_start],
+            ],
+            fields=['employee', 'name', 'time', 'log_type'],
+            order_by='time desc',
+            limit=1
+        )
+        if prev_checkin and prev_checkin[0].log_type == 'IN':
+            prev_open_checkin = prev_checkin[0]
+            effective_prev_time = max(prev_open_checkin.time, month_start)
+            prev_day_key = str((effective_prev_time - timedelta(hours=5)).day)
+            if prev_day_key not in attendance_data[employee_fullname]['attendance']:
+                attendance_data[employee_fullname]['attendance'][prev_day_key] = {
+                    'in_time': None,
+                    'out_time': None,
+                    'check_in': None,
+                    'check_out': None,
+                    'breaks': [],
+                    'break_log': [],
+                    'issues': [],
+                    'shifts': 0,
+                    'work_time': 0,
+                    'break_time': 0
+                }
+            attendance_data[employee_fullname]['attendance'][prev_day_key]['in_time'] = effective_prev_time
+            attendance_data[employee_fullname]['attendance'][prev_day_key]['check_in'] = prev_open_checkin
+            attendance_data[employee_fullname]['status'] = "Working"
+            checkin_stack.append(prev_open_checkin)
+        
         for checkin in checkin_list:
             checkin_day = (checkin.time - timedelta(hours=5)).day
             day_key = str(checkin_day)
@@ -1681,13 +1811,20 @@ def employee_attendance(date=None, employee=None, company=None):
             
             # Process different checkin types
             if checkin.log_type == 'IN':
-                if day_data['in_time'] is not None:
+                if day_data['in_time'] is not None and day_data['out_time'] is None:
+                    # Existing shift for the day is still open -> true double check-in
                     day_data['issues'].append(f"{checkin.time.strftime('%d/%m/%Y, %H:%M:%S')} - Double Check-in same day")
-                day_data['in_time'] = checkin.time
-                day_data['check_in'] = checkin
-                attendance_data[employee_fullname]['status'] = "Working"
-                checkin_stack.append(checkin)
-                day_data['shifts'] += 1
+                else:
+                    # Previous shift (if any) is closed; start a new shift on the same day
+                    day_data['in_time'] = checkin.time
+                    day_data['check_in'] = checkin
+                    day_data['out_time'] = None
+                    day_data['check_out'] = None
+                    day_data['breaks'] = []
+                    day_data['break_log'] = []
+                    attendance_data[employee_fullname]['status'] = "Working"
+                    checkin_stack.append(checkin)
+                    day_data['shifts'] += 1
                 
             elif checkin.log_type == 'OUT':
                 day_data['out_time'] = checkin.time
@@ -1698,11 +1835,33 @@ def employee_attendance(date=None, employee=None, company=None):
                     day_data['issues'].append(f"{checkin.time.strftime('%d/%m/%Y, %H:%M:%S')} - Check-out without check-in")
                 else:
                     clock_in = checkin_stack.pop()
-                    clockin_day = (clock_in.time - timedelta(hours=5)).day
+                    effective_clock_in_time = clock_in.time
+                    if effective_clock_in_time < month_start:
+                        effective_clock_in_time = month_start
+                    clockin_day = (effective_clock_in_time - timedelta(hours=5)).day
+                    clockin_day_key = str(clockin_day)
+                    
+                    if clockin_day_key not in attendance_data[employee_fullname]['attendance']:
+                        attendance_data[employee_fullname]['attendance'][clockin_day_key] = {
+                            'in_time': None,
+                            'out_time': None,
+                            'check_in': None,
+                            'check_out': None,
+                            'breaks': [],
+                            'break_log': [],
+                            'issues': [],
+                            'shifts': 0,
+                            'work_time': 0,
+                            'break_time': 0
+                        }
+                    
+                    if attendance_data[employee_fullname]['attendance'][clockin_day_key]['in_time'] is None:
+                        attendance_data[employee_fullname]['attendance'][clockin_day_key]['in_time'] = effective_clock_in_time
+                        attendance_data[employee_fullname]['attendance'][clockin_day_key]['check_in'] = clock_in
                     
                     if checkin_day == clockin_day:
                         # Same day shift
-                        work_time = checkin.time - clock_in.time
+                        work_time = checkin.time - effective_clock_in_time
                         work_hours = round(work_time.total_seconds() / 3600, 2)
                         day_data['work_time'] += work_hours
                         attendance_data[employee_fullname]['working_hours'] += work_hours
@@ -1710,18 +1869,17 @@ def employee_attendance(date=None, employee=None, company=None):
                         day_data['issues'].append(f"{clock_in.time.strftime('%d/%m/%Y, %H:%M:%S')} - Employee checked in for more than 2 days")
                     else:
                         # Shift carries over to next day
-                        # End first day at 4:59 AM
-                        first_day_end = datetime(current_year, current_month, checkin_day, 4, 59)
-                        work_time1 = first_day_end - clock_in.time
+                        # End first day at 4:59 AM on the actual checkout date to avoid month boundary errors
+                        first_day_end = checkin.time.replace(hour=4, minute=59, second=0, microsecond=0)
+                        work_time1 = first_day_end - effective_clock_in_time
                         work_hours1 = round(work_time1.total_seconds() / 3600, 2)
                         
-                        clockin_day_key = str(clockin_day)
                         if clockin_day_key in attendance_data[employee_fullname]['attendance']:
                             attendance_data[employee_fullname]['attendance'][clockin_day_key]['work_time'] += work_hours1
                             attendance_data[employee_fullname]['attendance'][clockin_day_key]['out_time'] = first_day_end
                         
-                        # Start second day at 5:00 AM
-                        second_day_start = datetime(current_year, current_month, checkin_day, 5)
+                        # Start second day at 5:00 AM on the same actual checkout date
+                        second_day_start = checkin.time.replace(hour=5, minute=0, second=0, microsecond=0)
                         work_time2 = checkin.time - second_day_start
                         work_hours2 = round(work_time2.total_seconds() / 3600, 2)
                         
@@ -1760,15 +1918,62 @@ def employee_attendance(date=None, employee=None, company=None):
             else:
                 day_data['issues'].append(f"{checkin.time.strftime('%d/%m/%Y, %H:%M:%S')} - Unknown checkin type")
         
+        # Handle any remaining unclosed checkins - report as issues only if NOT from today
+        today = (frappe.utils.now_datetime() - timedelta(hours=5)).date()
         while checkin_stack:
             unclosed_checkin = checkin_stack.pop()
             unclosed_day = (unclosed_checkin.time - timedelta(hours=5)).day
             unclosed_day_key = str(unclosed_day)
-            today = (frappe.utils.now_datetime() - timedelta(hours=5)).date()
-            if unclosed_day_key in attendance_data[employee_fullname]['attendance'] and today != (unclosed_checkin.time - timedelta(hours=5)).date():
+            unclosed_checkin_date = (unclosed_checkin.time - timedelta(hours=5)).date()
+            
+            print(f"[DEBUG] Processing unclosed checkin for {employee_fullname}: day={unclosed_day}, day_key={unclosed_day_key}, time={unclosed_checkin.time}")
+            print(f"[DEBUG] Today's date: {today}, Checkin date: {unclosed_checkin_date}")
+            
+            # Try to find a checkout right after the month window to close cross-month shifts
+            resolved_with_future_checkout = False
+            future_checkout = frappe.get_list(
+                "Employee Checkin",
+                filters=[
+                    ['Employee Checkin', 'employee', '=', employee.name],
+                    ['Employee Checkin', 'time', '>', unclosed_checkin.time],
+                    ['Employee Checkin', 'time', '<=', month_end + timedelta(days=1)]
+                ],
+                fields=['employee', 'name', 'time', 'log_type'],
+                order_by='time asc',
+                limit=1
+            )
+            
+            if (
+                future_checkout
+                and future_checkout[0].log_type == 'OUT'
+                and unclosed_day_key in attendance_data[employee_fullname]['attendance']
+            ):
+                # Treat this as a cross-month shift; cap hours at month_end boundary
+                effective_out_time = min(future_checkout[0].time, month_end)
+                effective_in_time = max(unclosed_checkin.time, month_start)
+                work_hours = round((effective_out_time - effective_in_time).total_seconds() / 3600, 2)
+                
+                day_data = attendance_data[employee_fullname]['attendance'][unclosed_day_key]
+                day_data['out_time'] = effective_out_time
+                day_data['check_out'] = future_checkout[0]
+                day_data['work_time'] += work_hours
+                attendance_data[employee_fullname]['working_hours'] += work_hours
+                attendance_data[employee_fullname]['status'] = "Off"
+                
+                resolved_with_future_checkout = True
+                print(f"[DEBUG] Resolved cross-month shift using checkout at {future_checkout[0].time} (counted until {effective_out_time})")
+            
+            # Only report as issue if it's NOT from today (previous days only) and we could not resolve it
+            if (not resolved_with_future_checkout) and unclosed_checkin_date != today and unclosed_day_key in attendance_data[employee_fullname]['attendance']:
                 attendance_data[employee_fullname]['attendance'][unclosed_day_key]['issues'].append(
                     f"{unclosed_checkin.time.strftime('%d/%m/%Y, %H:%M:%S')} - Checkin without checkout"
                 )
+                print(f"[DEBUG] Added issue for unclosed checkin from previous day: {unclosed_checkin.time}")
+            else:
+                if unclosed_checkin_date == today:
+                    print(f"[DEBUG] Skipping issue for today's unclosed checkin (still working): {unclosed_checkin.time}")
+                else:
+                    print(f"[DEBUG] ERROR: day_key {unclosed_day_key} not found in attendance data for {employee_fullname}")
 
         # Calculate current day work hours only if it's actually today and employee is currently working
         is_current_date = (target_date.date() == datetime.now().date())
@@ -1834,9 +2039,7 @@ def employee_attendance(date=None, employee=None, company=None):
         'year': current_year,
         'processed_date': target_date.strftime('%Y-%m-%d')
     }
-    
 
-    
 @frappe.whitelist()
 def get_doctype_permissions(doctype: str, name: str | None = None):
     """
