@@ -215,7 +215,21 @@ def get_logged_session():
 
 @frappe.whitelist(allow_guest=True)
 def get_company_details():
-    return frappe.get_doc("Company", frappe.get_list("Company")[0])
+    # Be defensive: user_settings may be empty/malformed, and we should not crash the API.
+    selected_profile = None
+    try:
+        raw = frappe.model.utils.user_settings.get("Company")
+        if raw:
+            selected_profile = (json.loads(raw) or {}).get("selectedProfile")
+    except Exception:
+        selected_profile = None
+
+    company = (
+        selected_profile
+        or frappe.defaults.get_user_default("Company")
+        or frappe.get_doc("Company", frappe.get_list("Company", fields=["name"])[0].name).name
+    )
+    return frappe.get_doc("Company", company)
     
 
 @frappe.whitelist(allow_guest=True)
@@ -281,19 +295,34 @@ def create_employee_attendance():
 	"""
 	try:
 		print("🔄 Starting employee attendance processing...")
-		
-		# Fetch all data upfront to avoid N+1 queries
+
+		selected_profile = None
+		try:
+			raw = frappe.model.utils.user_settings.get("Company")
+			if raw:
+				selected_profile = (json.loads(raw) or {}).get("selectedProfile")
+		except Exception:
+			selected_profile = None
+
+		company = (
+			selected_profile
+			or frappe.defaults.get_user_default("Company")
+			or frappe.get_doc("Company", frappe.get_list("Company", fields=["name"])[0].name).name
+		)
+		company_name = company.name
+
 		print("📥 Fetching employee data and unlinked checkins...")
-		employees = frappe.get_list("Employee",filters={'status': 'Active'}, fields=['name', 'first_name', 'last_name', 'employee_name'])
+		employees = frappe.get_list(
+			"Employee",
+			filters={'status': 'Active', 'company': company_name},
+			fields=['name', 'first_name', 'last_name', 'employee_name'],
+		)
 		
 		if not employees:
 			print("❌ No employees found in the system")
 			return
-		
-		# Get company name once
-		company = frappe.get_list("Company", limit=1)
-		company_name = company[0].name if company else None
-		
+
+
 		# Fetch all unlinked checkins for all employees in one query
 		employee_names = [emp.name for emp in employees]
 		all_checkins = frappe.get_list(
@@ -1555,9 +1584,20 @@ def employee_attendance(date=None, employee=None, company=None):
         Dict containing attendance data for all employees for the month
     """
     if company is None:
-        company = frappe.get_doc("Company", frappe.get_list("Company")[0])
-    else:
-        company = frappe.get_doc("Company", company)
+        # Be defensive: user_settings may be empty/malformed, and we should not crash the API.
+        selected_profile = None
+        try:
+            raw = frappe.model.utils.user_settings.get("Company")
+            if raw:
+                selected_profile = (json.loads(raw) or {}).get("selectedProfile")
+        except Exception:
+            selected_profile = None
+
+        company = (
+            selected_profile
+            or frappe.defaults.get_user_default("Company")
+            or frappe.get_doc("Company", frappe.get_list("Company", fields=["name"])[0].name).name
+        )
     
     print(f"[VERBOSE] Starting employee_attendance function with date parameter: {date}")
     
@@ -1603,7 +1643,7 @@ def employee_attendance(date=None, employee=None, company=None):
         employee_list = frappe.get_all(
             "Employee",
             fields=['name', 'first_name', 'last_name', 'hourly_rate', 'designation'],
-            filters={'status': 'Active'}
+            filters={'status': 'Active', company: company.name}
         )
     
     print(f"[VERBOSE] Found {len(employee_list)} active employees")
