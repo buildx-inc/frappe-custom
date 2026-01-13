@@ -289,7 +289,7 @@ def log(message, logging_enabled = True):
 		print(message)
 
 @frappe.whitelist()
-def create_employee_attendance():
+def create_employee_attendance(company=None):
 	"""
 	Process employee attendance with bulk data fetching and improved error handling.
 	"""
@@ -303,18 +303,17 @@ def create_employee_attendance():
 				selected_profile = (json.loads(raw) or {}).get("selectedProfile")
 		except Exception:
 			selected_profile = None
-
-		company = (
-			selected_profile
-			or frappe.defaults.get_user_default("Company")
-			or frappe.get_doc("Company", frappe.get_list("Company", fields=["name"])[0].name).name
-		)
-		company_name = company.name
+		if company is None:
+			company = (
+				selected_profile
+				or frappe.defaults.get_user_default("Company")
+				or frappe.get_doc("Company", frappe.get_list("Company", fields=["name"])[0].name).name
+			)
 
 		print("📥 Fetching employee data and unlinked checkins...")
 		employees = frappe.get_list(
 			"Employee",
-			filters={'status': 'Active', 'company': company_name},
+			filters={'status': 'Active', 'company': company},
 			fields=['name', 'first_name', 'last_name', 'employee_name'],
 		)
 		
@@ -342,7 +341,7 @@ def create_employee_attendance():
 		print(f"👥 Found {len(employees)} employees")
 		print(f"🔗 Found {len(all_checkins)} unlinked checkins")
 		print(f"📊 {len(checkins_by_employee)} employees have unlinked checkins")
-		print(f"🏢 Company: {company_name}")
+		print(f"🏢 Company: {company}")
 		print("-" * 60)
 		
 		# Process each employee's attendance
@@ -361,7 +360,7 @@ def create_employee_attendance():
 			
 			# Process this employee's checkins with improved logic
 			created_records, employee_issues = _process_employee_attendance(
-				employee, employee_checkins, company_name
+				employee, employee_checkins, company
 			)
 			processed_count += created_records
 			total_issues += employee_issues
