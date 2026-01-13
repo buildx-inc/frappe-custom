@@ -1598,7 +1598,8 @@ def employee_attendance(date=None, employee=None, company=None):
             or frappe.defaults.get_user_default("Company")
             or frappe.get_doc("Company", frappe.get_list("Company", fields=["name"])[0].name).name
         )
-    
+    company = frappe.get_doc("Company", company)
+
     print(f"[VERBOSE] Starting employee_attendance function with date parameter: {date}")
     
     # Parse input date and determine month/year to process
