@@ -1598,7 +1598,8 @@ def employee_attendance(date=None, employee=None, company=None):
             or frappe.defaults.get_user_default("Company")
             or frappe.get_doc("Company", frappe.get_list("Company", fields=["name"])[0].name).name
         )
-    company = frappe.get_doc("Company", company)
+    # `company` should remain the input (string company name). Use a separate variable for the Doc.
+    company_doc = frappe.get_doc("Company", company)
 
     print(f"[VERBOSE] Starting employee_attendance function with date parameter: {date}")
     
@@ -1644,7 +1645,8 @@ def employee_attendance(date=None, employee=None, company=None):
         employee_list = frappe.get_all(
             "Employee",
             fields=['name', 'first_name', 'last_name', 'hourly_rate', 'designation'],
-            filters={'status': 'Active', company: company.name}
+            # NOTE: The filter key must be the fieldname "company", not the `Company` Doc object.
+            filters={'status': 'Active', 'company': company_doc.name}
         )
     
     print(f"[VERBOSE] Found {len(employee_list)} active employees")
@@ -1703,7 +1705,7 @@ def employee_attendance(date=None, employee=None, company=None):
             "`tabJournal Entry Account`.credit_in_account_currency as credit",
         ],
         filters=[
-            ["Journal Entry Account", "account", "=", f"Payroll Payable - {company.abbr}"],
+            ["Journal Entry Account", "account", "=", f"Payroll Payable - {company_doc.abbr}"],
             ["Journal Entry", "title", "like", "%Petty Cash%"],
             ["Journal Entry", "posting_date", ">=", month_start.date()],
             ["Journal Entry", "posting_date", "<", month_end.date()],
