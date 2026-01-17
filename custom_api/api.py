@@ -908,6 +908,26 @@ def notify_assignment(
 
 	enqueue_create_notification(allocated_to, notification_doc)
  
+@frappe.whitelist()
+def generate_pdf(doctype, name, print_format, letterhead=None, page_size=None):
+	pdf_options = {"page-size": page_size} if page_size else None
+	pdf = frappe.get_print(
+		doctype=doctype,
+		name=name,
+		print_format=print_format,
+		no_letterhead=1 if not letterhead else 0,
+		letterhead=letterhead,
+		as_pdf=True,
+		pdf_options=pdf_options,
+	)
+	frappe.local.response.filename = "{name}.pdf".format(
+		name=name.replace(" ", "-").replace("/", "-")
+	)
+	frappe.local.response.filecontent = pdf
+	frappe.local.response.type = "pdf"
+	return pdf
+
+
 @frappe.whitelist(allow_guest=True)
 def convert_docx_to_pdf():
 	if 'docx_file' not in frappe.request.files:
