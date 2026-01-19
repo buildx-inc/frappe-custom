@@ -427,8 +427,15 @@ def _process_employee_attendance(employee, checkins, company_name):
 		# Process based on log type (original logic simplified)
 		if checkin.log_type == 'IN':
 			if checkin_day in attendance_data and attendance_data[checkin_day]['check_in'] is not None:
-				attendance_data[checkin_day]['issues'].append(f"{_format_timestamp(checkin.time)} - Double Check-IN same day")
-				issues_count += 1
+				day_data = attendance_data[checkin_day]
+				# If there's already a checkout, treat this as a break return
+				if day_data['check_out'] is not None:
+					day_data['break_log'].append({'out': day_data['check_out'], 'in': checkin})
+					day_data['check_out'] = None
+					checkin_stack.append(checkin)
+				else:
+					day_data['issues'].append(f"{_format_timestamp(checkin.time)} - Double Check-IN same day")
+					issues_count += 1
 			elif checkin_day in attendance_data:
 				attendance_data[checkin_day]['check_in'] = checkin
 				checkin_stack.append(checkin)
