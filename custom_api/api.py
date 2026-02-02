@@ -2344,3 +2344,11 @@ def convert_tender_to_sales_order(tender_name: str):
     from custom_api.tender import convert_tender_to_sales_order as _fn
 
     return _fn(tender_name)
+
+
+@frappe.whitelist()
+def recompute_tender_totals(tender_name: str):
+    """Recompute Tender item + competitor totals."""
+    from custom_api.tender import recompute_tender_totals as _fn
+
+    return _fn(tender_name)

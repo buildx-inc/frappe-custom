@@ -6,7 +6,7 @@ from frappe import _
 
 def _compute_amount(qty, rate):
     try:
-        return (float(qty or 0) * float(rate or 0))
+        return float(qty or 0) * float(rate or 0)
     except Exception:
         return 0
 
@@ -18,6 +18,54 @@ def _validate_tender(tender_doc):
     items = tender_doc.get("items") or []
     if not items:
         frappe.throw(_("Tender must have at least one item."))
+
+
+@frappe.whitelist()
+def recompute_tender_totals(tender_name: str) -> dict:
+    """Recompute Tender item amounts + competitor totals.
+
+    Updates in-place:
+    - Tender Item.amount = qty * rate
+    - Tender Competitor Price.amount = qty * rate
+    - Tender Competitor.total_amount = sum(amount) for its prices
+
+    Returns:
+      {"tender": <name>, "competitors": {<competitor_name>: <total>, ...}}
+
+    Notes:
+    - Competitor matching uses string equality between:
+      - Tender Competitor.competitor_name
+      - Tender Competitor Price.competitor
+    """
+
+    if not tender_name:
+        frappe.throw(_("tender_name is required"))
+
+    tender = frappe.get_doc("Tender", tender_name)
+
+    # 1) item amounts
+    for row in tender.get("items") or []:
+        row.amount = _compute_amount(row.get("qty"), row.get("rate"))
+
+    # 2) competitor price amounts + aggregation
+    totals = {}
+    for row in tender.get("competitor_prices") or []:
+        row.amount = _compute_amount(row.get("qty"), row.get("rate"))
+        comp = (row.get("competitor") or "").strip()
+        if not comp:
+            continue
+        totals[comp] = float(totals.get(comp, 0) or 0) + float(row.amount or 0)
+
+    # 3) write totals into competitors table
+    for row in tender.get("competitors") or []:
+        name = (row.get("competitor_name") or "").strip()
+        if not name:
+            continue
+        row.total_amount = totals.get(name, 0)
+
+    tender.save(ignore_permissions=True)
+
+    return {"tender": tender.name, "competitors": totals}
 
 
 @frappe.whitelist()
@@ -37,6 +85,14 @@ def create_quotation_from_tender(tender_name: str) -> str:
 
     tender = frappe.get_doc("Tender", tender_name)
     _validate_tender(tender)
+
+    # Ensure computed totals are up-to-date before generating documents.
+    try:
+        recompute_tender_totals(tender.name)
+        tender = frappe.get_doc("Tender", tender.name)
+    except Exception:
+        # Do not block quotation creation if totals computation fails.
+        pass
 
     qtn = frappe.new_doc("Quotation")
     qtn.quotation_to = "Customer"
