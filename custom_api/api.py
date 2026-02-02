@@ -2316,3 +2316,31 @@ def get_linked_docs_with_metadata(doctype, name):
         "other_related_docs": _aggregate(other_related),
     }
 
+
+# --- Tender (psm) helpers ---
+
+@frappe.whitelist()
+def create_quotation_from_tender(tender_name: str):
+    """Tender -> Quotation helper (business logic).
+
+    Implemented in custom_api.tender to keep api.py slim.
+    """
+    from custom_api.tender import create_quotation_from_tender as _fn
+
+    return _fn(tender_name)
+
+
+@frappe.whitelist()
+def create_sales_order_from_quotation(quotation_name: str):
+    """Quotation -> Sales Order helper."""
+    from custom_api.tender import create_sales_order_from_quotation as _fn
+
+    return _fn(quotation_name)
+
+
+@frappe.whitelist()
+def convert_tender_to_sales_order(tender_name: str):
+    """Tender -> Quotation -> Sales Order helper."""
+    from custom_api.tender import convert_tender_to_sales_order as _fn
+
+    return _fn(tender_name)
