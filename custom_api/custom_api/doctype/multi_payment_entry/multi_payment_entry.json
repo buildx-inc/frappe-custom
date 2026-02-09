@@ -1,0 +1,139 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-01-30 21:28:34.105428",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "posting_date",
+  "payment_entry",
+  "amount",
+  "currency",
+  "mode_of_payment",
+  "account",
+  "cheque_no",
+  "cheque_clearance_date",
+  "bank",
+  "linked_cheque"
+ ],
+ "fields": [
+  {
+   "default": "Today",
+   "fieldname": "posting_date",
+   "fields": "[]",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Posting Date",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private"
+  },
+  {
+   "fieldname": "payment_entry",
+   "fields": "[]",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Payment Entry",
+   "options": "Payment Entry",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private"
+  },
+  {
+   "fieldname": "amount",
+   "fields": "[]",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Amount",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private"
+  },
+  {
+   "fieldname": "currency",
+   "fields": "[]",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Currency",
+   "options": "Currency",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private"
+  },
+  {
+   "default": "Cash",
+   "fieldname": "mode_of_payment",
+   "fields": "[]",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Mode of Payment",
+   "options": "Mode of Payment",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private"
+  },
+  {
+   "fieldname": "account",
+   "fields": "[]",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Account",
+   "options": "Account",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private"
+  },
+  {
+   "fieldname": "cheque_no",
+   "fields": "[]",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Cheque No",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private"
+  },
+  {
+   "fieldname": "cheque_clearance_date",
+   "fields": "[]",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Cheque Clearance Date",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private"
+  },
+  {
+   "fieldname": "bank",
+   "fields": "[]",
+   "fieldtype": "Link",
+   "label": "Bank",
+   "options": "Bank",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private"
+  },
+  {
+   "fieldname": "linked_cheque",
+   "fields": "[]",
+   "fieldtype": "Link",
+   "label": "Linked Cheque",
+   "options": "Cheque",
+   "table_modal_fields": "[]",
+   "table_type": "List",
+   "upload_privacy": "Private"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-02-01 16:48:17.962766",
+ "modified_by": "Administrator",
+ "module": "Custom Api",
+ "name": "Multi Payment Entry",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

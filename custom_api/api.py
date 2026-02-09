@@ -2352,3 +2352,67 @@ def recompute_tender_totals(tender_name: str):
     from custom_api.tender import recompute_tender_totals as _fn
 
     return _fn(tender_name)
+
+#function that creates a sales invoice from parameters
+
+@frappe.whitelist()
+def create_doc_and_multi_payment(reference_doc,multi_payment,submit=False):
+	submit = int(submit or 0)
+	if isinstance(reference_doc, str):
+		reference_doc = json.loads(reference_doc)
+	if not isinstance(reference_doc, dict):
+		frappe.throw(_("reference_doc must be a dict or JSON string"))
+
+	reference_doctype = reference_doc.get("doctype")
+	allowed = {"Sales Invoice", "Purchase Invoice", "Sales Order", "Purchase Order"}
+	if reference_doctype not in allowed:
+		frappe.throw(
+			_("Invalid reference_doc.doctype. Must be one of {0}").format(", ".join(sorted(allowed)))
+		)
+
+	if isinstance(multi_payment, str):
+		multi_payment = json.loads(multi_payment)
+	if not isinstance(multi_payment, dict):
+		frappe.throw(_("multi_payment must be a dict or JSON string"))
+
+	# One transaction for both docs
+	frappe.db.savepoint("create_doc_and_multi_payment")
+	try:
+		ref = frappe.get_doc(reference_doc)
+
+		# Insert if new
+		if ref.get("__islocal") or not ref.get("name") or str(ref.name).startswith("new-"):
+			ref.insert()
+		else:
+			ref.save()
+
+		if submit:
+			ref.submit()
+
+		mp_values = dict(multi_payment)
+		mp_values["doctype"] = "Multi Payment"
+		mp_values["reference_doctype"] = ref.doctype
+		mp_values["reference_doc"] = ref.name
+
+		mp = frappe.get_doc(mp_values)
+		mp.insert()
+
+		if submit:
+			mp.submit()
+
+		frappe.db.commit()
+		return {
+			"reference": {"doctype": ref.doctype, "name": ref.name, "docstatus": ref.docstatus},
+			"multi_payment": {"doctype": mp.doctype, "name": mp.name, "docstatus": mp.docstatus},
+		}
+
+	except Exception:
+		frappe.db.rollback(save_point="create_doc_and_multi_payment")
+		raise
+
+
+def employee_checkin_on_update(doc, method):
+    attendance = frappe.get_doc("Attendance", doc.attendance)
+    attendance.cancel()
+    attendance.delete()
+    create_employee_attendance(doc.company)
