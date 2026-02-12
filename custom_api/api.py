@@ -2412,10 +2412,9 @@ def create_doc_and_multi_payment(reference_doc,multi_payment,submit=False):
 
 
 def employee_checkin_on_update(doc, method):
+    doc.company = frappe.db.get_value("Employee", {'name': doc.employee}, "company")
     if doc.attendance != None and doc.attendance != "":
         attendance = frappe.get_doc("Attendance", doc.attendance)
         attendance.cancel()
         attendance.delete()
     create_employee_attendance(doc.company)
-
-    frappe.db.commit()
