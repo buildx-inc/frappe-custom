@@ -640,6 +640,25 @@ def _create_attendance_record(day_data, company_name, employee):
 	# FIXED: Use total_seconds() instead of just seconds for correct time calculation
 	time_diff = day_data['check_out'].time - day_data['check_in'].time
 	working_hours = round(time_diff.total_seconds() / 3600, 2)
+
+	# Guardrail: an Attendance > 24 working hours indicates bad / mismatched checkins.
+	# Do not create an attendance in this case; log it for investigation.
+	if working_hours > 24:
+		employee_id = day_data['check_in'].employee
+		attendance_date = day_data['check_in'].time.date()
+		frappe.log_error(
+			"Attendance Processing - >24h working day",
+			(
+				f"Refusing to create Attendance because working_hours={working_hours} (>24).\n"
+				f"Employee: {employee_id}\n"
+				f"Date: {attendance_date}\n"
+				f"IN: {day_data['check_in'].time}\n"
+				f"OUT: {day_data['check_out'].time}\n"
+				f"Checkin IN name: {day_data['check_in'].name}\n"
+				f"Checkin OUT name: {day_data['check_out'].name}\n"
+			),
+		)
+		return "skipped_over_24h", None
 	
 	# Calculate month range for overtime calculation
 	check_in_date = day_data['check_in'].time
@@ -2417,4 +2436,3 @@ def employee_checkin_on_update(doc, method):
         attendance = frappe.get_doc("Attendance", doc.attendance)
         attendance.cancel()
         attendance.delete()
-    create_employee_attendance(doc.company)
