@@ -32,3 +32,7 @@ scheduler_events = {
         "custom_api.api.create_employee_attendance"
     ]
 }
+
+override_doctype_class = {
+    "Task": "custom_api.task.task.CustomTask",
+}

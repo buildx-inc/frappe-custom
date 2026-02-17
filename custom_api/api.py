@@ -2436,3 +2436,86 @@ def employee_checkin_on_update(doc, method):
         attendance = frappe.get_doc("Attendance", doc.attendance)
         attendance.cancel()
         attendance.delete()
+
+
+def _get_previous_status_before_overdue(task_name):
+    versions = frappe.get_all(
+        "Version",
+        filters={"ref_doctype": "Task", "docname": task_name},
+        fields=["name", "data"],
+        order_by="creation desc",
+    )
+
+    for version in versions:
+        if not version.data:
+            continue
+
+        try:
+            data = json.loads(version.data) if isinstance(version.data, str) else version.data
+        except Exception:
+            continue
+
+        for change in data.get("changed") or []:
+            if not isinstance(change, (list, tuple)) or len(change) < 3:
+                continue
+
+            fieldname, old_value, new_value = change[0], change[1], change[2]
+            if fieldname == "status" and new_value == "Overdue":
+                return old_value
+
+    return None
+
+
+@frappe.whitelist()
+def backfill_task_previous_status_for_overdue(limit=None):
+    frappe.only_for("System Manager")
+
+    if not frappe.db.has_column("Task", "previous_status"):
+        frappe.throw("Task field 'previous_status' does not exist. Run migrations first.")
+
+    row_limit = None
+    if limit is not None and str(limit).strip():
+        row_limit = int(limit)
+        if row_limit <= 0:
+            frappe.throw("limit must be a positive integer")
+
+    query = """
+        SELECT name
+        FROM `tabTask`
+        WHERE status = 'Overdue'
+          AND IFNULL(previous_status, '') = ''
+        ORDER BY modified DESC
+    """
+    params = ()
+    if row_limit:
+        query += " LIMIT %s"
+        params = (row_limit,)
+
+    overdue_tasks = frappe.db.sql(query, params, as_dict=True)
+
+    updated = 0
+    skipped_missing_version = 0
+    errors = []
+
+    for task in overdue_tasks:
+        task_name = task.name
+        try:
+            previous_status = _get_previous_status_before_overdue(task_name)
+            if not previous_status:
+                skipped_missing_version += 1
+                continue
+
+            frappe.db.set_value("Task", task_name, "previous_status", previous_status, update_modified=False)
+            updated += 1
+        except Exception as exc:
+            errors.append({"task": task_name, "error": str(exc)})
+
+    if updated:
+        frappe.db.commit()
+
+    return {
+        "scanned": len(overdue_tasks),
+        "updated": updated,
+        "skipped_missing_version": skipped_missing_version,
+        "errors": errors,
+    }
