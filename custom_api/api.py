@@ -31,6 +31,7 @@ import random
 from openpyxl import load_workbook
 from erpnext.controllers.item_variant import create_variant
 import math
+from frappe.utils.pdf import get_pdf
 
 
 @frappe.whitelist()
@@ -2519,3 +2520,40 @@ def backfill_task_previous_status_for_overdue(limit=None):
         "skipped_missing_version": skipped_missing_version,
         "errors": errors,
     }
+
+
+@frappe.whitelist()
+def download_daily_task_report_pdf(filters=None):
+    if not frappe.has_permission("Task", "report"):
+        frappe.throw(_("Not permitted to access Task reports"))
+
+    filters = frappe.parse_json(filters) if filters else {}
+
+    from custom_api.custom_api.report.daily_task_report.daily_task_report import (
+        get_report_rows,
+        get_rows_grouped_by_bucket,
+    )
+
+    rows, _summary = get_report_rows(filters)
+    sections = get_rows_grouped_by_bucket(rows)
+    report_date = frappe.utils.getdate(filters.get("report_date") or frappe.utils.today())
+
+    context = {
+        "report_date": report_date,
+        "generated_on": frappe.utils.now_datetime(),
+        "generated_by": frappe.session.user,
+        "selected_user": filters.get("user"),
+        "selected_project": filters.get("project"),
+        "selected_priority": filters.get("priority"),
+        "sections": sections,
+    }
+
+    html = frappe.render_template(
+        "custom_api/custom_api/templates/reports/daily_task_report_print.html",
+        context,
+    )
+    pdf = get_pdf(html, options={"orientation": "Landscape"})
+
+    frappe.local.response.filename = f"daily-task-report-{report_date}.pdf"
+    frappe.local.response.filecontent = pdf
+    frappe.local.response.type = "pdf"
