@@ -28,6 +28,11 @@ doc_events = {
 }
 
 scheduler_events = {
+    "cron": {
+        "0/15 * * * *": [
+            "custom_api.api.send_daily_task_report_emails",
+        ]
+    },
     "daily": [
         "custom_api.api.create_employee_attendance"
     ]

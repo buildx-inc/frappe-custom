@@ -112,7 +112,7 @@ def get_task_rows(filters):
     if frappe.db.has_column("Task", "previous_status"):
         previous_status_column = "t.previous_status as previous_status"
 
-    return frappe.db.sql(
+    rows = frappe.db.sql(
         f"""
         select
             t.name,

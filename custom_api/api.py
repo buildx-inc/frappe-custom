@@ -32,6 +32,7 @@ from openpyxl import load_workbook
 from erpnext.controllers.item_variant import create_variant
 import math
 from frappe.utils.pdf import get_pdf
+from zoneinfo import ZoneInfo
 
 
 @frappe.whitelist()
@@ -2527,6 +2528,14 @@ def download_daily_task_report_pdf(filters=None):
     if not frappe.has_permission("Task", "report"):
         frappe.throw(_("Not permitted to access Task reports"))
 
+    payload = _build_daily_task_report_pdf(filters, generated_by=frappe.session.user)
+
+    frappe.local.response.filename = payload["filename"]
+    frappe.local.response.filecontent = payload["pdf"]
+    frappe.local.response.type = "pdf"
+
+
+def _build_daily_task_report_pdf(filters=None, generated_by=None):
     filters = frappe.parse_json(filters) if filters else {}
 
     from custom_api.custom_api.report.daily_task_report.daily_task_report import (
@@ -2545,7 +2554,7 @@ def download_daily_task_report_pdf(filters=None):
     context = {
         "report_date": report_date,
         "generated_on": frappe.utils.now_datetime(),
-        "generated_by": frappe.session.user,
+        "generated_by": generated_by or frappe.session.user or "Administrator",
         "selected_user": filters.get("user"),
         "selected_project": filters.get("project"),
         "selected_priority": filters.get("priority"),
@@ -2561,6 +2570,168 @@ def download_daily_task_report_pdf(filters=None):
     )
     pdf = get_pdf(html, options={"orientation": "Landscape"})
 
-    frappe.local.response.filename = f"daily-task-report-{report_date}.pdf"
-    frappe.local.response.filecontent = pdf
-    frappe.local.response.type = "pdf"
+    user_part = str(filters.get("user") or "all").replace("@", "_").replace(".", "_")
+    filename = f"daily-task-report-{user_part}-{report_date}.pdf"
+
+    return {
+        "pdf": pdf,
+        "filename": filename,
+        "report_date": str(report_date),
+        "rows_count": len(rows),
+    }
+
+
+def _daily_task_report_subject(report_date):
+    return f"Daily Task Report - {report_date}"
+
+
+def _parse_assign_json(raw_value):
+    if not raw_value:
+        return []
+    if isinstance(raw_value, list):
+        return raw_value
+    if isinstance(raw_value, str):
+        try:
+            parsed = json.loads(raw_value)
+            return parsed if isinstance(parsed, list) else []
+        except Exception:
+            return []
+    return []
+
+
+def _get_active_task_assignee_recipients():
+    active_statuses = ["Open", "Working", "Pending Review", "Overdue"]
+    user_ids = set()
+
+    tasks = frappe.get_all(
+        "Task",
+        filters={"status": ["in", active_statuses]},
+        fields=["name", "_assign"],
+        limit=0,
+    )
+    task_names = [task.name for task in tasks]
+
+    for task in tasks:
+        user_ids.update(_parse_assign_json(task.get("_assign")))
+
+    if task_names:
+        child_rows = frappe.get_all(
+            "User List",
+            filters={"parent": ["in", task_names], "parenttype": "Task", "parentfield": "users"},
+            fields=["user"],
+            limit=0,
+        )
+        user_ids.update(row.user for row in child_rows if row.user)
+
+    todo_rows = frappe.db.sql(
+        """
+        select distinct td.allocated_to
+        from `tabToDo` td
+        inner join `tabTask` t on t.name = td.reference_name
+        where td.reference_type = 'Task'
+          and td.status not in ('Cancelled', 'Closed')
+          and t.status in %(active_statuses)s
+          and td.allocated_to is not null
+          and td.allocated_to != ''
+        """,
+        {"active_statuses": tuple(active_statuses)},
+        as_dict=True,
+    )
+    user_ids.update(row.allocated_to for row in todo_rows if row.allocated_to)
+
+    if not user_ids:
+        return []
+
+    return frappe.get_all(
+        "User",
+        filters={"name": ["in", list(user_ids)], "enabled": 1, "email": ["is", "set"]},
+        fields=["name", "email", "full_name"],
+        limit=0,
+    )
+
+
+def _already_sent_daily_task_report(user, report_date):
+    cache_key = f"daily_task_report_sent::{report_date}::{user}"
+    if frappe.cache().get_value(cache_key):
+        return True
+
+    return bool(
+        frappe.db.exists(
+            "Communication",
+            {
+                "reference_doctype": "User",
+                "reference_name": user,
+                "subject": _daily_task_report_subject(report_date),
+                "sent_or_received": "Sent",
+                "creation": ["between", [f"{report_date} 00:00:00", f"{report_date} 23:59:59"]],
+            },
+        )
+    )
+
+
+def send_daily_task_report_emails():
+    system_tz = frappe.db.get_single_value("System Settings", "time_zone")
+    if not system_tz:
+        frappe.log_error("System Settings.time_zone is not configured", "Daily Task Report Email Scheduler")
+        return {"status": "skipped_missing_system_timezone"}
+
+    try:
+        now_local = datetime.now(ZoneInfo(system_tz))
+    except Exception:
+        frappe.log_error(frappe.get_traceback(), "Daily Task Report Email Scheduler: Invalid System Timezone")
+        return {"status": "skipped_invalid_system_timezone", "time_zone": system_tz}
+
+    # Job runs every 15 minutes; process only in the 9:00-9:14 window.
+    if not (now_local.hour == 9 and now_local.minute < 15):
+        return {"status": "skipped_time_window", "time_zone": system_tz, "now": str(now_local)}
+
+    report_date = now_local.date().isoformat()
+    recipients = _get_active_task_assignee_recipients()
+
+    result = {
+        "status": "ok",
+        "time_zone": system_tz,
+        "report_date": report_date,
+        "total_candidates": len(recipients),
+        "sent": 0,
+        "skipped_already_sent": 0,
+        "skipped_no_tasks": 0,
+        "errors": [],
+    }
+
+    for recipient in recipients:
+        try:
+            user = recipient.name
+            email = recipient.email
+            display_name = recipient.full_name or user
+
+            if _already_sent_daily_task_report(user, report_date):
+                result["skipped_already_sent"] += 1
+                continue
+
+            payload = _build_daily_task_report_pdf(
+                filters={"report_date": report_date, "user": user},
+                generated_by="Administrator",
+            )
+            if payload["rows_count"] == 0:
+                result["skipped_no_tasks"] += 1
+                continue
+
+            frappe.sendmail(
+                recipients=[email],
+                subject=_daily_task_report_subject(report_date),
+                message=(
+                    f"<p>Hello {display_name},</p>"
+                    "<p>Please find attached your Daily Task Report PDF.</p>"
+                ),
+                attachments=[{"fname": payload["filename"], "fcontent": payload["pdf"]}],
+                reference_doctype="User",
+                reference_name=user,
+            )
+            frappe.cache().set_value(f"daily_task_report_sent::{report_date}::{user}", 1, expires_in_sec=172800)
+            result["sent"] += 1
+        except Exception as exc:
+            result["errors"].append({"user": recipient.get("name"), "error": str(exc)})
+            frappe.log_error(frappe.get_traceback(), "Daily Task Report Email Scheduler")
+
+    return result
