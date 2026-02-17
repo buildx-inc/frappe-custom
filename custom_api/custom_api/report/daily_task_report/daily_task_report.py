@@ -11,7 +11,8 @@ def execute(filters=None):
     filters = frappe._dict(filters or {})
     rows, summary = get_report_rows(filters)
     columns = get_columns()
-    return columns, rows, None, None, summary
+    chart = get_chart(rows)
+    return columns, rows, None, chart, summary
 
 
 def get_report_rows(filters=None):
@@ -44,6 +45,25 @@ def get_rows_grouped_by_bucket(rows):
     for row in rows:
         grouped.setdefault(row.bucket, []).append(row)
     return grouped
+
+
+def get_bucket_counter(rows):
+    counter = {"Upcoming (2 Days)": 0, "Overdue": 0, "Other Active Tasks": 0}
+    for row in rows:
+        counter[row.bucket] = counter.get(row.bucket, 0) + 1
+    return counter
+
+
+def get_top_highlights(rows, limit=8):
+    highlight = []
+    for row in rows:
+        is_critical = row.priority in ("Urgent", "High")
+        is_attention_bucket = row.bucket in ("Overdue", "Upcoming (2 Days)")
+        if is_critical or is_attention_bucket:
+            highlight.append(row)
+        if len(highlight) >= limit:
+            break
+    return highlight
 
 
 def get_task_rows(filters):
@@ -137,16 +157,39 @@ def get_bucket_label(due_date, report_date, upcoming_until):
 
 
 def get_summary(rows):
-    counter = {"Upcoming (2 Days)": 0, "Overdue": 0, "Other Active Tasks": 0}
-    for row in rows:
-        counter[row.bucket] = counter.get(row.bucket, 0) + 1
+    counter = get_bucket_counter(rows)
+    critical_count = sum(1 for row in rows if row.priority in ("Urgent", "High"))
 
     return [
         {"value": len(rows), "label": _("Total Active Tasks"), "datatype": "Int"},
+        {"value": critical_count, "label": _("Critical Priority (Urgent/High)"), "datatype": "Int"},
         {"value": counter["Upcoming (2 Days)"], "label": _("Upcoming (2 Days)"), "datatype": "Int"},
         {"value": counter["Overdue"], "label": _("Overdue"), "datatype": "Int"},
         {"value": counter["Other Active Tasks"], "label": _("Other Active Tasks"), "datatype": "Int"},
     ]
+
+
+def get_chart(rows):
+    counter = get_bucket_counter(rows)
+    labels = ["Upcoming (2 Days)", "Overdue", "Other Active Tasks"]
+    total_values = [counter.get(label, 0) for label in labels]
+    critical_values = [
+        sum(1 for row in rows if row.bucket == label and row.priority in ("Urgent", "High"))
+        for label in labels
+    ]
+
+    return {
+        "data": {
+            "labels": labels,
+            "datasets": [
+                {"name": _("Total Tasks"), "values": total_values},
+                {"name": _("Urgent/High"), "values": critical_values},
+            ],
+        },
+        "type": "bar",
+        "height": 280,
+        "barOptions": {"stacked": 0},
+    }
 
 
 def get_columns():

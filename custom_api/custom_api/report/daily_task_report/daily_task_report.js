@@ -37,16 +37,32 @@ frappe.query_reports["Daily Task Report"] = {
 	},
 	"formatter": function (value, row, column, data, default_formatter) {
 		value = default_formatter(value, row, column, data);
-		if (!data || column.fieldname !== "bucket") {
+		if (!data) {
 			return value;
 		}
 
-		if (data.bucket === "Overdue") {
-			return `<span style="color: #d9534f; font-weight: 600">${value}</span>`;
+		if (column.fieldname === "bucket") {
+			if (data.bucket === "Overdue") {
+				return `<span style="color: #d9534f; font-weight: 700">${value}</span>`;
+			}
+			if (data.bucket === "Upcoming (2 Days)") {
+				return `<span style="color: #f0ad4e; font-weight: 700">${value}</span>`;
+			}
+			return value;
 		}
-		if (data.bucket === "Upcoming (2 Days)") {
-			return `<span style="color: #f0ad4e; font-weight: 600">${value}</span>`;
+
+		if (column.fieldname === "priority") {
+			if (data.priority === "Urgent") return `<span style="color:#b91c1c;font-weight:700">${value}</span>`;
+			if (data.priority === "High") return `<span style="color:#c2410c;font-weight:700">${value}</span>`;
+			return value;
 		}
+
+		if (column.fieldname === "days_to_due" && data.days_to_due !== null && data.days_to_due !== undefined) {
+			if (data.days_to_due < 0) return `<span style="color:#b91c1c;font-weight:700">${value}</span>`;
+			if (data.days_to_due <= 2) return `<span style="color:#c2410c;font-weight:700">${value}</span>`;
+			return value;
+		}
+
 		return value;
 	},
 };

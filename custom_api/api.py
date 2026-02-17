@@ -2530,12 +2530,16 @@ def download_daily_task_report_pdf(filters=None):
     filters = frappe.parse_json(filters) if filters else {}
 
     from custom_api.custom_api.report.daily_task_report.daily_task_report import (
+        get_bucket_counter,
         get_report_rows,
         get_rows_grouped_by_bucket,
+        get_top_highlights,
     )
 
-    rows, _summary = get_report_rows(filters)
+    rows, summary = get_report_rows(filters)
     sections = get_rows_grouped_by_bucket(rows)
+    bucket_counter = get_bucket_counter(rows)
+    highlights = get_top_highlights(rows, limit=10)
     report_date = frappe.utils.getdate(filters.get("report_date") or frappe.utils.today())
 
     context = {
@@ -2546,6 +2550,9 @@ def download_daily_task_report_pdf(filters=None):
         "selected_project": filters.get("project"),
         "selected_priority": filters.get("priority"),
         "sections": sections,
+        "summary": summary,
+        "bucket_counter": bucket_counter,
+        "highlights": highlights,
     }
 
     html = frappe.render_template(
