@@ -1,3 +1,5 @@
+import json
+
 import frappe
 from frappe import _
 from frappe.utils import add_days, getdate, today
@@ -121,23 +123,107 @@ def get_task_rows(filters):
             t.exp_end_date,
             t.review_date,
             {previous_status_column},
-            t.modified,
-            ta.assignees
+            t._assign,
+            t.modified
         from `tabTask` t
-        left join (
-            select
-                parent,
-                group_concat(coalesce(nullif(full_name, ''), user) order by idx asc separator ', ') as assignees
-            from `tabUser List`
-            where parenttype = 'Task'
-              and parentfield = 'users'
-            group by parent
-        ) ta on ta.parent = t.name
         where {' and '.join(where_sql)}
         """,
         query_filters,
         as_dict=True,
     )
+
+    task_names = [row.name for row in rows]
+    assignees_map = get_assignees_map(task_names, rows)
+    for row in rows:
+        row.assignees = assignees_map.get(row.name, "")
+
+    return rows
+
+
+def get_assignees_map(task_names, task_rows):
+    if not task_names:
+        return {}
+
+    child_assignees = frappe.get_all(
+        "User List",
+        filters={"parent": ["in", task_names], "parenttype": "Task", "parentfield": "users"},
+        fields=["parent", "user", "full_name"],
+        order_by="idx asc",
+    )
+
+    todo_assignees = frappe.get_all(
+        "ToDo",
+        filters={
+            "reference_type": "Task",
+            "reference_name": ["in", task_names],
+            "allocated_to": ["is", "set"],
+            "status": ["not in", ["Cancelled", "Closed"]],
+        },
+        fields=["reference_name", "allocated_to"],
+        order_by="creation asc",
+    )
+
+    users_to_resolve = set()
+    for row in task_rows:
+        users_to_resolve.update(parse_assign_json(row.get("_assign")))
+    for row in todo_assignees:
+        users_to_resolve.add(row.allocated_to)
+    for row in child_assignees:
+        users_to_resolve.add(row.user)
+
+    user_fullname_map = {}
+    if users_to_resolve:
+        users = frappe.get_all("User", filters={"name": ["in", list(users_to_resolve)]}, fields=["name", "full_name"])
+        user_fullname_map = {u.name: (u.full_name or u.name) for u in users}
+
+    child_by_task = {}
+    for row in child_assignees:
+        display_name = row.full_name or user_fullname_map.get(row.user) or row.user
+        child_by_task.setdefault(row.parent, []).append((row.user, display_name))
+
+    todo_by_task = {}
+    for row in todo_assignees:
+        todo_by_task.setdefault(row.reference_name, []).append(row.allocated_to)
+
+    task_row_map = {row.name: row for row in task_rows}
+    result = {}
+    for task_name in task_names:
+        ordered = []
+        seen = set()
+
+        for user_id, display_name in child_by_task.get(task_name, []):
+            key = user_id or display_name
+            if key and key not in seen:
+                seen.add(key)
+                ordered.append(display_name)
+
+        for user_id in parse_assign_json(task_row_map.get(task_name, {}).get("_assign")):
+            if user_id and user_id not in seen:
+                seen.add(user_id)
+                ordered.append(user_fullname_map.get(user_id, user_id))
+
+        for user_id in todo_by_task.get(task_name, []):
+            if user_id and user_id not in seen:
+                seen.add(user_id)
+                ordered.append(user_fullname_map.get(user_id, user_id))
+
+        result[task_name] = ", ".join(ordered)
+
+    return result
+
+
+def parse_assign_json(raw_value):
+    if not raw_value:
+        return []
+    if isinstance(raw_value, list):
+        return raw_value
+    if isinstance(raw_value, str):
+        try:
+            parsed = json.loads(raw_value)
+            return parsed if isinstance(parsed, list) else []
+        except Exception:
+            return []
+    return []
 
 
 def get_relevant_due_date(row):
