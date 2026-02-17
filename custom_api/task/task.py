@@ -1,7 +1,23 @@
 import frappe
+from erpnext.projects.doctype.task.task import Task as ERPNextTask
+from frappe.utils import getdate, today
 from frappe.utils.background_jobs import enqueue
     
 
+
+
+class CustomTask(ERPNextTask):
+    def update_status(self):
+        should_mark_overdue = (
+            self.status not in ("Cancelled", "Completed", "Overdue")
+            and self.exp_end_date
+            and getdate(self.exp_end_date) < getdate(today())
+        )
+
+        if should_mark_overdue and frappe.db.has_column("Task", "previous_status"):
+            self.db_set("previous_status", self.status, update_modified=False)
+
+        super().update_status()
 
 
 @frappe.whitelist()
