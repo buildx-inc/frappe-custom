@@ -64,13 +64,24 @@ def get_task_rows(filters):
 
     if filters.get("user"):
         where_sql.append(
-            """exists (
-                select 1
-                from `tabUser List` ulf
-                where ulf.parent = t.name
-                  and ulf.parenttype = 'Task'
-                  and ulf.parentfield = 'users'
-                  and ulf.user = %(user)s
+            """(
+                exists (
+                    select 1
+                    from `tabUser List` ulf
+                    where ulf.parent = t.name
+                      and ulf.parenttype = 'Task'
+                      and ulf.parentfield = 'users'
+                      and ulf.user = %(user)s
+                )
+                or ifnull(t._assign, '') like concat('%%', %(user)s, '%%')
+                or exists (
+                    select 1
+                    from `tabToDo` td
+                    where td.reference_type = 'Task'
+                      and td.reference_name = t.name
+                      and td.allocated_to = %(user)s
+                      and td.status not in ('Cancelled', 'Closed')
+                )
             )"""
         )
         query_filters["user"] = filters.get("user")
